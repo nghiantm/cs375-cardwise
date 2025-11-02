@@ -1,0 +1,59 @@
+card_id,card_name,card_type,bank_id,img_url,annual_fee,perks
+bank_of_america_customized_cash_rewards,Bank of America® Customized Cash Rewards,cashback,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/8ckn_cshsigcm_v_250x158.png,0
+bank_of_america_unlimited_cash_rewards,Bank of America® Unlimited Cash Rewards,cashback,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/8cty_cshsigcm_v_250x157.png,0
+bankamericard,BankAmericard®,cashback,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/8cae_nrwcm_mc_250x158.png,0
+bank_of_america_travel_rewards,Bank of America® Travel Rewards,point,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/8blm_trvsigcm_v_250x158.png,0
+bank_of_america_premium_rewards,Bank of America® Premium Rewards®,point,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/bofa_prmsigcm_255x158.png,95
+bank_of_america_premium_rewards_elite,Bank of America® Premium Rewards® Elite,point,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/prmeltcm_v_infinite_250px.png,550
+bank_of_america_customized_cash_rewards_for_students,Bank of America® Customized Cash Rewards for Students,cashback,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/8ckn_cshsigcm_v_250x158.png,0
+bank_of_america_unlimited_cash_rewards_for_students,Bank of America® Unlimited Cash Rewards for Students,cashback,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/8cty_cshsigcm_v_250x157.png,0
+bankamericard_for_students,BankAmericard® for Students,cashback,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/8cae_nrwcm_mc_250x158.png,0
+bank_of_america_travel_rewards_for_students,Bank of America® Travel Rewards for Students,point,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/8blm_trvsigcm_v_250x158.png,0
+bank_of_america_customized_cash_rewards_secured,Bank of America® Customized Cash Rewards secured,cashback,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/8ckn_cshcm_v_250x158.png,0
+bank_of_america_unlimited_cash_rewards_secured,Bank of America® Unlimited Cash Rewards secured,cashback,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/8cty_cshcm_v_250x157.png,0
+bankamericard_secured,BankAmericard® secured,cashback,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/8cae_nrwcm_mc_250x158.png,0
+bank_of_america_travel_rewards_visa_secured,Bank of America® Travel Rewards Visa® secured,point,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/8blm_trvcm_v_250x158.png,0
+alaska_airlines_visa_signature,Alaska Airlines Visa Signature®,point,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/1bbt_sigcm_v_mileageplan_250x158.png,95
+susan_g_komen_customized_cash_rewards,Susan G. Komen® Customized Cash Rewards,cashback,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/qvys_sigcm_v_250.png,0
+free_spirit_travel_more_world_elite_mastercard,Free Spirit® Travel More World Elite Mastercard®,point,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/ragb_eltcm_mc_blk_250.png,0
+allways_rewards_visa,Allways Rewards Visa®,point,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/ragp_sigcm_v_250.png,59
+air_france_klm_world_elite_mastercard,Air France KLM World Elite Mastercard®,point,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/1bdx_eltwldcm_mc_250x158.png,89
+royal_caribbean_visa_signature,Royal Caribbean Visa Signature®,point,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/raem_sigcm_v_250x158.png,0
+norwegian_cruise_line_world_mastercard,Norwegian Cruise Line® World Mastercard®,point,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/radz_wldcm_mc_250x158.png,0
+celebrity_cruises_visa_signature,Celebrity Cruises Visa Signature®,point,bank_of_america,https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/ragf_sigcm_v_250.png,0
+chase_sapphire_preferred,Chase Sapphire Preferred®,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/sapphire_preferred_card.png,95
+chase_sapphire_reserve,Chase Sapphire Reserve®,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/sapphire_reserve_card.png,550
+chase_freedom_unlimited,Chase Freedom Unlimited®,cashback,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/freedom_unlimited_card_alt.png,0
+chase_freedom_flex,Chase Freedom Flex®,cashback,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/freedom_flex_card_alt.png,0
+chase_freedom_rise,Chase Freedom Rise®,cashback,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/freedom_rise_alt_card2.png,0
+slate_edge,Slate Edge®,cashback,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/slate_edge_card_alt.png,0
+the_new_unitedsm_explorer,The New UnitedSM Explorer,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/united_explorer_card.png,0
+the_new_united_questsm,The New United QuestSM,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/united_quest_card.png,350
+the_new_united_gatewaysm,The New United GatewaySM,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/united_gateway_card.png,0
+the_new_united_clubsm,The New United ClubSM,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/united_club_infinite_card.png,695
+southwest_rapid_rewards_plus,Southwest Rapid Rewards® Plus,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/swa_plus_card-1.png,69
+southwest_rapid_rewards_priority,Southwest Rapid Rewards® Priority,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/swa_priority_card-2.png,149
+southwest_rapid_rewards_premier,Southwest Rapid Rewards® Premier,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/swa_premier_card.png,99
+marriott_bonvoy_boundless,Marriott Bonvoy Boundless®,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/marriott_bonvoy_boundless_card.png,95
+marriott_bonvoy_bountiful,Marriott Bonvoy Bountiful®,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/marriott_bonvoy_bountiful_card.png,250
+marriott_bonvoy_bold,Marriott Bonvoy Bold®,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/marriott-bonvoy-bold-card.png,0
+ihg_one_rewards_premier,IHG One Rewards Premier,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/ihg_premier_card.png,99
+ihg_one_rewards_traveler,IHG One Rewards Traveler,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/IHG_One_Traveler_card.png,0
+disney_premier_visa,Disney® Premier Visa®,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/disney.png,49
+disney_visa,Disney® Visa®,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/disney_visacard.png,0
+world_of_hyatt,World of Hyatt,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/world_of_hyatt_card.png,95
+aeroplan,Aeroplan®,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/aeroplan_card.png,95
+british_airways_visa_signature,British Airways Visa Signature®,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/british_sign_card.png,95
+aer_lingus_visa_signature,Aer Lingus Visa Signature®,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/aer_lingus_card.png,95
+iberia_visa_signature,Iberia Visa Signature®,point,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/iberia_card.png,95
+prime_visa,Prime Visa,cashback,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/prime_visa.png,0
+amazon_visa,Amazon Visa,cashback,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/amazon_visa.png,0
+doordash_rewards_mastercard,DoorDash Rewards Mastercard®,cashback,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/doordash_card.png,0
+instacart_mastercard,Instacart Mastercard®,cashback,chase,https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/instacart_card.png,0
+discover_it_cash_back,Discover it® Cash Back,cashback,discover,https://www.discover.com/content/dam/discover/en_us/credit-cards/card-acquisitions/grey-redesign/global/images/cardart/cardart-0introapr-cashit-196-123.png,0
+discover_it_student_cash_back,Discover it® Student Cash Back,cashback,discover,https://www.discover.com/content/dam/discover/en_us/credit-cards/card-acquisitions/grey-redesign/global/images/cardart/cardart-0introapr-studentit-196-123.png,0
+discover_it_secured,Discover it® Secured,cashback,discover,https://www.discover.com/content/dam/discover/en_us/credit-cards/card-acquisitions/grey-redesign/card-smarts/2025/cardart-cchp-it-secured-card-196-123.png,0
+discover_it_student_chrome,Discover it® Student Chrome,cashback,discover,https://www.discover.com/content/dam/discover/en_us/credit-cards/card-acquisitions/grey-redesign/global/images/cardart/cardart-0introapr-cashchrome-196-123.png,0
+discover_it_miles,Discover it® Miles,point,discover,https://www.discover.com/content/dam/discover/en_us/credit-cards/card-acquisitions/grey-redesign/global/images/cardart/cardart-0introapr-miles-196-123.png,0
+discover_it_chrome_gas_restaurant,Discover it® Chrome Gas & Restaurant,cashback,discover,https://www.discover.com/content/dam/discover/en_us/credit-cards/card-acquisitions/grey-redesign/global/images/cardart/cardart-0introapr-cashchrome-196-123.png,0
+nhl_discover_it,NHL® Discover it®,cashback,discover,https://www.discover.com/content/dam/discover/en_us/credit-cards/card-acquisitions/grey-redesign/global/images/cardart/cardart-0introapr-nhl-196-123.png,0

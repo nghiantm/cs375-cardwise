@@ -1,0 +1,5 @@
+/script/raw/*
+/script/__pycache__
+/script/scrape/__pycache__
+/script/venv
+/script/.env
