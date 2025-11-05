@@ -11,7 +11,7 @@ const connectDB = async () => {
   // mongoose.set('strictQuery', false);
 
   try {
-    await mongoose.connect(uri);
+    await mongoose.connect(uri); //Why are we using await here?
     console.log('Successfully connected to MongoDB');
 
     mongoose.connection.on('error', (err) => {
@@ -22,6 +22,7 @@ const connectDB = async () => {
       console.warn('MongoDB disconnected');
     });
   } catch (err) {
+    //console.log("mongo uri loaded: ", uri);
     console.error('Failed to connect to MongoDB:', err.message);
   }
 };

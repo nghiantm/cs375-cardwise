@@ -1,4 +1,4 @@
-# CreditOpt API
+# CardWise API
 
 This repository contains a minimal Express API written in Node.js that connects to a MongoDB database using Mongoose. It includes CORS for cross‑origin requests, uses `dotenv` for environment variable management, provides a simple health check route, and centralizes error handling. Docker and Docker Compose files are included for easy containerized deployment.
 
@@ -140,6 +140,46 @@ PORT=3000
 
 Keep credentials out of source control. For Docker deployments, pass `MONGODB_URI` as an environment variable in your `docker-compose.yml` or via your container orchestration secrets manager.
 
-## License
 
-This project is licensed under the ISC License. See the [LICENSE](#) file for details.
+# Other Details
+
+## API
+
+
+## Frontend ↔ API (User-facing)
+
+### Cards
+GET    /api/cards                    - list all cards (with filters)
+GET    /api/cards/:id                - get single card details
+GET    /api/cards/recommend          - NEW: get card recommendations based on spending
+
+### User Spending
+POST   /api/spending                 - add a spending transaction
+GET    /api/spending                 - get user's spending history
+GET    /api/spending/:id             - get single transaction
+PUT    /api/spending/:id             - update a transaction
+DELETE /api/spending/:id             - delete a transaction
+GET    /api/spending/summary         - NEW: get spending summary by category
+
+### Analytics
+POST   /api/cards/analyze            - trigger analysis for user's spending pattern
+GET    /api/analytics/profile        - NEW: get user's spending profile
+GET    /api/analytics/savings        - NEW: calculate potential savings with different cards
+
+### Users (optional, for later)
+POST   /api/users/register           - create account
+POST   /api/users/login              - authenticate
+GET    /api/users/profile            - get user profile
+
+
+## API ↔ Scripts:
+### Scraper Control
+POST   /api/scraper/run              - trigger scraper (with target: "chase", "amex", etc.)
+GET    /api/scraper/status           - check last scraper run status
+GET    /api/scraper/jobs             - NEW: list all scraper job history
+
+### Data Access 
+GET    /api/data/cards/raw           - get raw scraped card data (for script processing)
+POST   /api/data/cards/bulk          - bulk insert processed cards from scripts
+GET    /api/data/export/:collection  - export collection as JSON (for analysis)
+
