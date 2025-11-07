@@ -142,8 +142,19 @@ Keep credentials out of source control. For Docker deployments, pass `MONGODB_UR
 
 
 # Other Details
+We are going to be following MVC architectural pattern
 
-## API
+# Models
+
+## User.js
+
+Contains schema design for user database
+
+# Controllers
+
+## user controller
+
+# API
 
 
 ## Frontend ↔ API (User-facing)
