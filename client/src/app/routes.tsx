@@ -3,6 +3,9 @@ import Layout from "./Layout";
 import Landing from "../pages/Landing";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
+import Dashboard from "../pages/Dashboard";
+import AddStatements from "../pages/AddStatements";
+
 
 const router = createBrowserRouter([
   {
@@ -11,6 +14,9 @@ const router = createBrowserRouter([
       { path: "/", element: <Landing /> },
       { path: "/login", element: <Login /> },
       { path: "/signup", element: <Signup /> },
+      { path: "/dashboard", element: <Dashboard /> }, 
+      { path: "/add-statements", element: <AddStatements /> },
+
     ],
   },
 ]);
