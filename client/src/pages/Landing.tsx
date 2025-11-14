@@ -5,7 +5,6 @@ export default function Landing() {
   return (
     <main className="h-[calc(100vh-64px)] flex flex-col items-center justify-center gap-10">
 
-      {/* Logo + Title */}
       <div className="flex flex-row items-center gap-6 md:gap-8">
         <img
           src={icon}
@@ -17,7 +16,6 @@ export default function Landing() {
         </h1>
       </div>
 
-      {/* TEMPORARY: Dashboard Navigation */}
       <Link
         to="/dashboard"
         className="px-5 py-2.5 rounded-lg bg-navy text-white hover:bg-aqua hover:text-navy transition text-lg"

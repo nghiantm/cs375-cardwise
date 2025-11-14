@@ -1,21 +1,21 @@
-// src/data/mockDashboard.ts
+
 
 export type BankKey = "Chase" | "Bank of America" | "Capital One" | "Discover";
 
 export type CategorySpend = {
   category: string;
-  value: number; // total spend in this category
+  value: number; 
 };
 
 export type DailySpend = {
-  date: string;      // label for x-axis
+  date: string;      
   Chase: number;
   "Bank of America": number;
   "Capital One": number;
   Discover: number;
 };
 
-// Aggregate spend by category (all banks combined, for the donut chart)
+
 export const MOCK_CATEGORY_SPEND: CategorySpend[] = [
   { category: "Dining", value: 620 },
   { category: "Groceries", value: 480 },
@@ -24,7 +24,6 @@ export const MOCK_CATEGORY_SPEND: CategorySpend[] = [
   { category: "Online Shopping", value: 390 },
 ];
 
-// Daily spend per bank over 7 days (for the line chart)
 export const MOCK_DAILY_SPEND: DailySpend[] = [
   { date: "Mon", Chase: 80, "Bank of America": 60, "Capital One": 40, Discover: 20 },
   { date: "Tue", Chase: 120, "Bank of America": 50, "Capital One": 70, Discover: 30 },
@@ -35,7 +34,6 @@ export const MOCK_DAILY_SPEND: DailySpend[] = [
   { date: "Sun", Chase: 150, "Bank of America": 90, "Capital One": 80, Discover: 45 },
 ];
 
-// Simple “best card” suggestions by category for the right-side list
 export const MOCK_BEST_CARDS = [
   { category: "Dining", cardName: "Chase Sapphire Preferred", bank: "Chase" },
   { category: "Groceries", cardName: "Bank of America Customized Cash", bank: "Bank of America" },
