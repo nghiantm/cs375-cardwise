@@ -3,6 +3,7 @@ const cors = require('cors');
 
 const healthRoutes = require('./routes/health');
 const errorHandler = require('./middleware/errorHandler');
+const usersRouter = require('./routes/users');
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 
 // Mount health routes under /api
 app.use('/api', healthRoutes);
+app.use('/api/users', usersRouter); 
 
 // Centralized error handling middleware
 app.use(errorHandler);
