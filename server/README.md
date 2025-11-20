@@ -194,3 +194,54 @@ GET    /api/data/cards/raw           - get raw scraped card data (for script pro
 POST   /api/data/cards/bulk          - bulk insert processed cards from scripts
 GET    /api/data/export/:collection  - export collection as JSON (for analysis)
 
+
+
+# Handover
+
+
+## Startup and development
+
+
+For setup: 
+First, get your mongodb connection string and save that into your environment or a `.env` file
+
+
+Testing and run the server: `cd server && npm run dev`
+
+`dev` entry point is from `src/index.js` which loads environment vairables and connect to mongoDB and starts express server
+
+Right now, everything is being saved into `test` database and default collection for each model is their own name (Spending -> `spendings`).
+This above is **DEFAULT BEHAVIOUR** if you want to change, specify your own db and table in connection string in environment
+
+`index.js` file is responsible to connect using `db.js`. When you run `npm run dev`, you connect to `test` database and create respective 
+
+## Models
+
+We have two models right now:
+- Spending
+- User
+
+- Card (just start)
+
+## Controllers
+
+Again two controller for each object:
+
+
+- `spendingController.js`: 
+   1. Hardcoded userID for now which is a reference to ID assigned by mongoDB to the object
+
+
+- `userController.js`: 
+   1. Contains only basic registration function without JWT token 
+   2. No logic or updating user info or deletin account
+
+## Routes
+
+Describe where we can use which API
+
+- `spending.js`:
+   1. `POST /api/spending/`: Create a spending transaction into database
+   2. GET /api/spending/
+- `user.js`
+

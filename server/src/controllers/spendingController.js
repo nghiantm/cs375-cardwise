@@ -17,7 +17,7 @@ exports.createSpending = async (req, res, next) => {
             });
         }
 
-        const userId = '69191d66fe3e3eadcf102e5d';
+        const userId = '691e5bb8367d68ed3a766bfd';
 
         const newSpending = await Spending.create({
             userId,
@@ -46,7 +46,7 @@ exports.createSpending = async (req, res, next) => {
 exports.getAllSpendings = async (req, res, next) => {
     // GET /api/spending
     try {
-        const userId = '69191d66fe3e3eadcf102e5d'; 
+        const userId = '691e5bb8367d68ed3a766bfd'; 
         const { category, startDate, endDate } = req.query; // Optional category filter
         const filter = { userId };
         if (category) filter.category = category;
