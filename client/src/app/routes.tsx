@@ -5,6 +5,7 @@ import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import Dashboard from "../pages/Dashboard";
 import AddStatements from "../pages/AddStatements";
+import SpendingHistory from "../pages/SpendingHistory";
 
 
 const router = createBrowserRouter([
@@ -16,6 +17,7 @@ const router = createBrowserRouter([
       { path: "/signup", element: <Signup /> },
       { path: "/dashboard", element: <Dashboard /> }, 
       { path: "/add-statements", element: <AddStatements /> },
+      { path: "/spending", element: <SpendingHistory /> },
 
     ],
   },

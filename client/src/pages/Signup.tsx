@@ -84,13 +84,19 @@ export default function Signup() {
         throw new Error(data.message || "Registration failed");
       }
 
-      alert("Registration successful!");
-      navigate("/login");
+      // Success - redirect to login with success message
+      navigate("/login", { state: { message: "Registration successful! Please log in." } });
 
     } catch (err: any) {
-      setError(err.message || "An error occurred during registration");
+      // Check if it's a network error (fetch failed)
+      if (err.message === "Failed to fetch" || err instanceof TypeError) {
+        setError("Unable to reach server. Please check your connection and try again.");
+      } else {
+        // Server error or validation error
+        setError(err.message || "An error occurred during registration");
+      }
     } finally {
-      setLoading(false);  // Hide loading state
+      setLoading(false);
     }
   };
 

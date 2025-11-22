@@ -41,10 +41,10 @@ export default function Dashboard() {
           </button>
 
           <Link
-            to="/add-statements"
+            to="/spending"
             className="px-3 py-1.5 rounded-lg bg-navy text-white hover:bg-aqua hover:text-navy transition"
           >
-            Add Statements
+            View Spending
           </Link>
         </div>
       </section>

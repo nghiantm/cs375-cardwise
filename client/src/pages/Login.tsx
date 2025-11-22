@@ -1,10 +1,24 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import TextField from "../components/TextField";
 import PasswordField from "../components/PasswordField";
+import Alert from "../components/Alert";
 import appLogo from "../assets/appLogo.png";
 import picture from "../assets/picture.png";
 
 export default function Login() {
+  const location = useLocation();
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // Check if there's a success message from signup
+  useEffect(() => {
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      // Clear the state so message doesn't persist on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
+
   return (
     <main className="max-w-6xl mx-auto px-6 py-6 grid md:grid-cols-2 gap-8 h-[calc(100vh-64px)]">
       <section className="h-full bg-mint/50 rounded-2xl border border-aqua/40 p-8 flex flex-col">
@@ -15,6 +29,14 @@ export default function Login() {
 
         <h1 className="text-4xl font-bold text-navy mb-1">Welcome Back</h1>
         <p className="text-navy/70 mb-6">Please enter your details</p>
+
+        {successMessage && (
+          <Alert 
+            type="success" 
+            message={successMessage} 
+            onClose={() => setSuccessMessage("")}
+          />
+        )}
 
         <button
           type="button"
