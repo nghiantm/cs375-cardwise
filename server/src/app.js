@@ -9,7 +9,10 @@ const spendingRouter = require('./routes/spending');
 const app = express();
 
 // Enable CORS for all origins. In production, configure this appropriately.
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:5173',  // Your Vite dev server
+    credentials: true
+}));
 
 // Built‑in middleware for parsing JSON bodies
 app.use(express.json());
