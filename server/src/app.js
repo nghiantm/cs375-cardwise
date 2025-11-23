@@ -5,6 +5,8 @@ const healthRoutes = require('./routes/health');
 const errorHandler = require('./middleware/errorHandler');
 const usersRouter = require('./routes/users');
 const spendingRouter = require('./routes/spending');
+const cardsRouter = require('./routes/cards');
+
 
 const app = express();
 
@@ -18,6 +20,7 @@ app.use(express.json());
 app.use('/api', healthRoutes);
 app.use('/api/users', usersRouter); 
 app.use('/api/spending', spendingRouter);
+app.use('/api/cards', cardsRouter); 
 
 // Centralized error handling middleware
 app.use(errorHandler);

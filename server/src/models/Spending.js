@@ -1,52 +1,65 @@
+// server/src/models/Spending.js
 const mongoose = require('mongoose');
 
-
-const spendingSchema = new mongoose.Schema({
-
-    // TODO: userId (ObjectId reference)
-    // Hint: type: mongoose.Schema.Types.ObjectId, ref: 'User'
+const spendingSchema = new mongoose.Schema(
+  {
+    // Link each spending entry to a user
     userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
     },
-    
-    // TODO: amount (Number, required)
-    
-    amount: {
-        type: Number,
-        required: true,
-    },    
-    // TODO: category (String, required)
-    category: {
-        type: String,
-        required: true,
-    },
-    
-    // TODO: date (Date, required, default: Date.now)
-    date: {
-        type: Date,
-        required: true,
-        default: Date.now,
-    },
-    
-    // TODO: merchant (String, optional)
-    merchant: {
-        type: String,
-    },
-    
-    // TODO: notes (String, optional)
-    notes: {
-        type: String,
-    },
-    
-    // TODO: cardUsed (String, optional - for now just card name)
-    cardUsed: {
-        type: String,
-    }
 
-    
-}, {timestamps: true});
+    // Amount for the transaction
+    amount: {
+      type: Number,
+      required: true,
+    },
+
+    // Category of the transaction (dining, travel, groceries, etc.)
+    category: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    // Date of the transaction (defaults to now)
+    date: {
+      type: Date,
+      required: true,
+      default: Date.now,
+    },
+
+    // Merchant name (optional)
+    merchant: {
+      type: String,
+      trim: true,
+    },
+
+    // Notes about the transaction (optional)
+    notes: {
+      type: String,
+      trim: true,
+    },
+
+    /**
+     * Card linkage
+     *
+     * cardId: optional reference to the Card document
+     * cardUsed: optional free-text label (kept for backwards compatibility)
+     */
+    cardId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Card',
+    },
+
+    cardUsed: {
+      type: String,
+      trim: true,
+    },
+  },
+  { timestamps: true }
+);
 
 // create model factory
 const Spending = mongoose.model('Spending', spendingSchema);
