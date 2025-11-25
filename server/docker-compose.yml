@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      # Override the MONGO_URI so the API can reach Mongo within the Docker network
+      - MONGO_URI=mongodb://mongo:27017/creditopt
+      - PORT=3000
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:6.0
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: creditopt
+
+volumes:
+  mongo_data:
+    driver: local
