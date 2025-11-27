@@ -122,7 +122,7 @@ def main():
     #    transformed = transform_with_llm(combined_json, reward_prompt)
     #    out_f.write(transformed + "\n")
 
-    #print(f"Combined output written to {reward_output_path}")
+    print(f"Combined output written to {reward_output_path}")
 
     info_header = "card_id,card_name,card_type,bank_id,img_url,annual_fee,perks"
     with open(info_output_path, "w", encoding="utf-8") as out_f:

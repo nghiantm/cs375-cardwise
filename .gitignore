@@ -3,3 +3,6 @@
 /script/scrape/__pycache__
 /script/venv
 /script/.env
+/server/node_modules
+/server/.env*
+/node_modules/
