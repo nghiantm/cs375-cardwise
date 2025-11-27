@@ -8,7 +8,7 @@ ALL_CARDS_PATH = BASE_URL + '/credit-cards'
 OUTPUT_PATH = './raw/discover_cards.json'
 
 def scrape_credit_card(url):
-    all_cards_page_source = selenium_utils.get_page_source(url, 'cchp-tab', use_undetected=True, scroll_to_bottom=True)
+    all_cards_page_source = selenium_utils.get_page_source(url, 'siteframe', use_undetected=True, scroll_to_bottom=True)
     if not all_cards_page_source:
         print("Failed to retrieve the page source.")
         return
@@ -16,9 +16,10 @@ def scrape_credit_card(url):
     soup = BeautifulSoup(all_cards_page_source, 'html.parser')
 
     # Find the credit card information
-    personal_cards_div = soup.find('div', class_='dfsCardWrapper CCHPVariation-2')
+    personal_cards_div = soup.find('div', class_='dfsCardWrapper')
     #print("Personal Cards Div:", personal_cards_div.prettify())
-    cards = personal_cards_div.find_all('div', class_='dfscontainer')
+    cards = personal_cards_div.find_all('div', class_='dfscontainer light-theme')
+    print(f"Found {len(cards)} cards.")
     results = []
     for card in cards:
         card_name_a_tag = card.find('a', class_='cmp-button cmp-link-blue-font')

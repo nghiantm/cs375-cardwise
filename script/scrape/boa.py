@@ -1,6 +1,6 @@
 import re
 from bs4 import BeautifulSoup
-import script.scrape.selenium_utils as selenium_utils
+import selenium_utils as selenium_utils
 import json
 
 BASE_URL = 'https://www.bankofamerica.com'
