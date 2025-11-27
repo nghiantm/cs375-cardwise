@@ -25,7 +25,6 @@ import json
 import openai
 import csv
 from dotenv import load_dotenv
-import google.generativeai as genai
 
 INPUT_DIR = "./raw/"
 OUTPUT_DIR = "./processed/"
@@ -100,7 +99,6 @@ def main():
     load_dotenv()
     # Load API key
     openai.api_key = os.getenv("OPENAI_API_KEY")
-    genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
     if not openai.api_key:
         raise ValueError("Please set the OPENAI_API_KEY environment variable.")
 
@@ -135,6 +133,6 @@ def main():
     print(f"Combined output written to {info_output_path}")
 
 if __name__ == "__main__":
-    #run_all_py_files("scrape/")
+    run_all_py_files("scrape/")
 
-    main()
+    #main()
