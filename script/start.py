@@ -52,18 +52,13 @@ def transform_with_llm(content: str, prompt: str) -> str:
         {"role": "user", "content": f"{content}"}
     ]
     response = openai.chat.completions.create(
-        model="gpt-4.1",
+        model="gpt-5.1-2025-11-13",
         messages=messages,
-        temperature=0
+        # This model does not support temperature=0; use default/1 instead
+        temperature=1
     )
 
     return response.choices[0].message.content.strip()
-    '''
-    model = genai.GenerativeModel('gemini-2.5-flash-preview-05-20')
-    chat = model.start_chat()
-    response = chat.send_message(f"{prompt}\n\n{content}")
-    return response.text.strip()
-    '''
     
 def run_all_py_files(folder_path):
     py_files = sorted(glob.glob(os.path.join(folder_path, "*.py")))
@@ -115,16 +110,18 @@ def main():
         print(f"No valid JSON files found in {INPUT_DIR}.")
         return
 
-    #reward_header = "card_id,category,cashback_pct,point_mul"
-    #print(f"Found JSON files. Processing...")
-    #with open(reward_output_path, "w", encoding="utf-8") as out_f:
-    #    #out_f.write(reward_header + "\n")
-    #    transformed = transform_with_llm(combined_json, reward_prompt)
-    #    out_f.write(transformed + "\n")
+    print(f"Processing {len(combined_json)} records from JSON files...")
 
+    print(f"Doing reward prompt")
+    reward_header = "card_id,category,cashback_pct,point_mul"
+    with open(reward_output_path, "w", encoding="utf-8") as out_f:
+        out_f.write(reward_header + "\n")
+        transformed = transform_with_llm(combined_json, reward_prompt)
+        out_f.write(transformed + "\n")
     print(f"Combined output written to {reward_output_path}")
 
-    info_header = "card_id,card_name,card_type,bank_id,img_url,annual_fee,perks"
+    print(f"Doing info prompt")
+    info_header = "card_id,card_name,card_type,bank_id,img_url,annual_fee"
     with open(info_output_path, "w", encoding="utf-8") as out_f:
         out_f.write(info_header + "\n")
         transformed = transform_with_llm(combined_json, info_prompt)
@@ -133,6 +130,6 @@ def main():
     print(f"Combined output written to {info_output_path}")
 
 if __name__ == "__main__":
-    run_all_py_files("scrape/")
+    #run_all_py_files("scrape/") # Uncomment to run all scrape scripts
 
-    #main()
+    main()
