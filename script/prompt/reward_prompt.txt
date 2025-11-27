@@ -18,7 +18,7 @@ card_id,category,cashback_pct,point_mul
 Rules:
 1. **card_id**: derive from the card’s `"name"` by lowercasing, removing punctuation, replacing spaces with underscores.
 2. **For each key/value pair under `"rewards"`** (keys are arbitrary):
-   - **Classify** the reward text into one (and only one) category by keyword heuristics, there should be no repeating category for 1 card:
+   - **Classify** the reward text into one (and only one) category by keyword heuristics, there should be no repeating category for 1 card. Even if the percentage for any category is same as the "all" category, it should still be listed seperately (not combined into 1 "all" category):
      - **grocery**: mentions “grocery”, “supermarket”, “stores on groceries”
      - **gas**: mentions “gas station”, “fuel”
      - **dining**: mentions “restaurant”, “dining”, “eat”, “bars”, “cafés”
