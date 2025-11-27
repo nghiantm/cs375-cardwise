@@ -1,8 +1,14 @@
 requests==2.31.0
 beautifulsoup4==4.12.3
+
+# MongoDB driver
+pymongo[srv]
+
+# Environment variables
+python-dotenv
+
 openai
-dotenv
 selenium
-undetected_chromedriver
+undetected-chromedriver
 google-generativeai
 pandas
