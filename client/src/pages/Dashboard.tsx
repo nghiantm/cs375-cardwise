@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   PieChart,
   Pie,
@@ -11,11 +12,6 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import {
-  MOCK_CATEGORY_SPEND,
-  MOCK_DAILY_SPEND,
-  MOCK_BEST_CARDS,
-} from "../data/mockDashboard";
 import { Link } from "react-router-dom";
 
 const CATEGORY_COLORS = ["#0C2C47", "#8ADAB2", "#FFD580", "#97D3CD", "#2D5652"];
@@ -25,9 +21,136 @@ const BANK_COLORS: Record<string, string> = {
   "Bank of America": "#C0392B",
   "Capital One": "#1F618D",
   Discover: "#E67E22",
+  "American Express": "#2E7D32",
 };
 
+interface Transaction {
+  _id: string;
+  amount: number;
+  category: string;
+  date: string;
+  merchant?: string;
+  notes?: string;
+  cardUsed?: string;
+  createdAt?: string;
+}
+
+interface CategorySpend {
+  category: string;
+  value: number;
+}
+
+interface DailySpend {
+  date: string;
+  [key: string]: number | string;
+}
+
 export default function Dashboard() {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Fetch transactions on component mount
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
+
+  const fetchTransactions = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("http://localhost:3000/api/spending");
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch transactions");
+      }
+
+      const data = await response.json();
+      setTransactions(data.data || []);
+    } catch (err: any) {
+      if (err.message === "Failed to fetch" || err instanceof TypeError) {
+        setError("Unable to reach server. Please check your connection.");
+      } else {
+        setError(err.message || "Failed to load data");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculate total spend
+  const totalSpend = transactions.reduce((sum, t) => sum + t.amount, 0);
+
+  // Calculate spend by category
+  const categorySpend: CategorySpend[] = Object.entries(
+    transactions.reduce((acc, t) => {
+      acc[t.category] = (acc[t.category] || 0) + t.amount;
+      return acc;
+    }, {} as Record<string, number>)
+  )
+    .map(([category, value]) => ({ category, value }))
+    .sort((a, b) => b.value - a.value);
+
+  // Find top category
+  const topCategory = categorySpend.length > 0 ? categorySpend[0].category : "—";
+
+  // Calculate spend by card over last 7 days
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (6 - i));
+    return date;
+  });
+
+  const dailySpend: DailySpend[] = last7Days.map(date => {
+    const dateStr = date.toISOString().split('T')[0];
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+    
+    const dayTransactions = transactions.filter(t => 
+      t.date.startsWith(dateStr)
+    );
+
+    const cardSpends = dayTransactions.reduce((acc, t) => {
+      if (t.cardUsed) {
+        acc[t.cardUsed] = (acc[t.cardUsed] || 0) + t.amount;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    return {
+      date: dayName,
+      ...cardSpends
+    };
+  });
+
+  // Get recent 5 transactions
+  const recentTransactions = [...transactions]
+    .sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime())
+    .slice(0, 5);
+
+  // Calculate best card by category (most spending in each category)
+  const bestCardsByCategory = Object.entries(
+    transactions.reduce((acc, t) => {
+      if (!t.cardUsed) return acc;
+      
+      if (!acc[t.category]) {
+        acc[t.category] = {};
+      }
+      acc[t.category][t.cardUsed] = (acc[t.category][t.cardUsed] || 0) + t.amount;
+      return acc;
+    }, {} as Record<string, Record<string, number>>)
+  )
+    .map(([category, cards]) => {
+      const bestCard = Object.entries(cards).sort((a, b) => b[1] - a[1])[0];
+      return {
+        category,
+        cardName: bestCard[0],
+        amount: bestCard[1]
+      };
+    })
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 4); // Top 4 categories
+
   return (
     <main className="max-w-7xl mx-auto px-6 py-6 space-y-6">
 
@@ -51,13 +174,41 @@ export default function Dashboard() {
 
       {/* KPI Row */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {["Total Spend", "Top Category", "Rewards Earned", "Budget Progress"].map((t, i) => (
-          <div key={i} className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
-            <div className="text-sm text-navy/70">{t}</div>
-            <div className="text-2xl font-semibold mt-1">—</div>
+        <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
+          <div className="text-sm text-navy/70">Total Spend</div>
+          <div className="text-2xl font-semibold mt-1">
+            {loading ? "..." : `$${totalSpend.toFixed(2)}`}
           </div>
-        ))}
+        </div>
+        
+        <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
+          <div className="text-sm text-navy/70">Top Category</div>
+          <div className="text-2xl font-semibold mt-1">
+            {loading ? "..." : topCategory}
+          </div>
+        </div>
+        
+        <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
+          <div className="text-sm text-navy/70">Transactions</div>
+          <div className="text-2xl font-semibold mt-1">
+            {loading ? "..." : transactions.length}
+          </div>
+        </div>
+        
+        <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
+          <div className="text-sm text-navy/70">Cards Used</div>
+          <div className="text-2xl font-semibold mt-1">
+            {loading ? "..." : new Set(transactions.map(t => t.cardUsed).filter(Boolean)).size}
+          </div>
+        </div>
       </section>
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      )}
 
       {/* Main Content */}
       <section className="grid lg:grid-cols-3 gap-6">
@@ -69,34 +220,44 @@ export default function Dashboard() {
           <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
             <div className="flex items-center justify-between mb-2">
               <h2 className="font-semibold">Spend by Category</h2>
-              <div className="text-sm text-navy/70">This Month</div>
+              <div className="text-sm text-navy/70">All Time</div>
             </div>
 
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={MOCK_CATEGORY_SPEND}
-                    dataKey="value"
-                    nameKey="category"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    innerRadius={45}
-                    paddingAngle={2}
-                  >
-                    {MOCK_CATEGORY_SPEND.map((entry, index) => (
-                      <Cell
-                        key={entry.category}
-                        fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: number) => [`$${value.toFixed(0)}`, "Spend"]} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            {loading ? (
+              <div className="h-56 flex items-center justify-center text-navy/60">
+                Loading...
+              </div>
+            ) : categorySpend.length === 0 ? (
+              <div className="h-56 flex items-center justify-center text-navy/60">
+                No spending data yet
+              </div>
+            ) : (
+              <div className="h-56">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categorySpend as any}
+                      dataKey="value"
+                      nameKey="category"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      innerRadius={45}
+                      paddingAngle={2}
+                    >
+                      {categorySpend.map((entry, index) => (
+                        <Cell
+                          key={entry.category}
+                          fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, "Spend"]} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
 
           {/* LINE CHART */}
@@ -106,44 +267,72 @@ export default function Dashboard() {
               <div className="text-sm text-navy/70">Last 7 Days</div>
             </div>
 
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={MOCK_DAILY_SPEND} margin={{ left: -20 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip formatter={(value: number) => [`$${value.toFixed(0)}`, "Spend"]} />
-                  <Legend />
+            {loading ? (
+              <div className="h-56 flex items-center justify-center text-navy/60">
+                Loading...
+              </div>
+            ) : dailySpend.length === 0 ? (
+              <div className="h-56 flex items-center justify-center text-navy/60">
+                No spending data yet
+              </div>
+            ) : (
+              <div className="h-56">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={dailySpend as any} margin={{ left: -20 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, "Spend"]} />
+                    <Legend />
 
-                  <Line type="monotone" dataKey="Chase" stroke={BANK_COLORS["Chase"]} strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="Bank of America" stroke={BANK_COLORS["Bank of America"]} strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="Capital One" stroke={BANK_COLORS["Capital One"]} strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="Discover" stroke={BANK_COLORS["Discover"]} strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+                    {/* Dynamically render lines for each card */}
+                    {Object.keys(BANK_COLORS).map(cardName => (
+                      <Line 
+                        key={cardName}
+                        type="monotone" 
+                        dataKey={cardName} 
+                        stroke={BANK_COLORS[cardName]} 
+                        strokeWidth={2} 
+                        dot={false}
+                        connectNulls
+                      />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
 
           {/* RECENT TRANSACTIONS */}
           <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold">Recent Transactions</h2>
-              <a className="underline hover:text-aqua text-sm" href="#">
+              <Link to="/spending" className="underline hover:text-aqua text-sm">
                 View all
-              </a>
+              </Link>
             </div>
 
-            <ul className="divide-y divide-aqua/30">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <li key={i} className="py-3 flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">Merchant {i + 1}</div>
-                    <div className="text-sm text-navy/70">Dining • Chase</div>
-                  </div>
-                  <div className="font-medium">$—</div>
-                </li>
-              ))}
-            </ul>
+            {loading ? (
+              <div className="py-8 text-center text-navy/60">Loading...</div>
+            ) : recentTransactions.length === 0 ? (
+              <div className="py-8 text-center text-navy/60">
+                No transactions yet. <Link to="/spending" className="underline text-aqua">Add one!</Link>
+              </div>
+            ) : (
+              <ul className="divide-y divide-aqua/30">
+                {recentTransactions.map((transaction) => (
+                  <li key={transaction._id} className="py-3 flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">{transaction.merchant || transaction.category}</div>
+                      <div className="text-sm text-navy/70">
+                        {transaction.category} • {transaction.cardUsed}
+                      </div>
+                    </div>
+                    <div className="font-medium">${transaction.amount.toFixed(2)}</div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
@@ -152,21 +341,32 @@ export default function Dashboard() {
 
           {/* BEST CARDS */}
           <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
-            <h2 className="font-semibold mb-3">Best Card by Category</h2>
-            <ul className="space-y-2">
-              {MOCK_BEST_CARDS.map((item) => (
-                <li
-                  key={item.category}
-                  className="flex items-center justify-between p-2 rounded-lg bg-mint/60"
-                >
-                  <span>{item.category}</span>
-                  <span className="text-sm text-navy/80 text-right">
-                    {item.cardName}
-                    <span className="block text-xs text-navy/60">{item.bank}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <h2 className="font-semibold mb-3">Most Used Card by Category</h2>
+            
+            {loading ? (
+              <div className="py-8 text-center text-navy/60">Loading...</div>
+            ) : bestCardsByCategory.length === 0 ? (
+              <div className="py-8 text-center text-navy/60 text-sm">
+                No data yet. Start adding transactions!
+              </div>
+            ) : (
+              <ul className="space-y-2">
+                {bestCardsByCategory.map((item) => (
+                  <li
+                    key={item.category}
+                    className="flex items-center justify-between p-2 rounded-lg bg-mint/60"
+                  >
+                    <span className="font-medium">{item.category}</span>
+                    <span className="text-sm text-navy/80 text-right">
+                      {item.cardName}
+                      <span className="block text-xs text-navy/60">
+                        ${item.amount.toFixed(2)}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {/* OFFERS */}
