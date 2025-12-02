@@ -1,77 +1,116 @@
-import { Link, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
+// client/src/pages/Login.tsx
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import TextField from "../components/TextField";
 import PasswordField from "../components/PasswordField";
 import Alert from "../components/Alert";
-import appLogo from "../assets/appLogo.png";
-import picture from "../assets/picture.png";
 
 export default function Login() {
-  const location = useLocation();
-  const [successMessage, setSuccessMessage] = useState("");
+  const navigate = useNavigate();
 
-  // Check if there's a success message from signup
-  useEffect(() => {
-    if (location.state?.message) {
-      setSuccessMessage(location.state.message);
-      // Clear the state so message doesn't persist on refresh
-      window.history.replaceState({}, document.title);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const res = await fetch("http://localhost:3000/api/users/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error(
+          `Server returned non-JSON response (status ${res.status})`
+        );
+      }
+
+      if (!res.ok) {
+        // This will show messages like "Invalid email or password"
+        setError(data?.message || `Login failed (status ${res.status})`);
+        setLoading(false);
+        return;
+      }
+      if (data?.data) {
+  localStorage.setItem("cardwise_user", JSON.stringify(data.data));
+}   
+      // later we can store JWT here:
+      // if (data.token) {
+      //   localStorage.setItem("cardwise_token", data.token);
+      // }
+
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Login error:", err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Network error. Please check if the server is running.");
+      }
+      setLoading(false);
     }
-  }, [location]);
+  };
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-6 grid md:grid-cols-2 gap-8 h-[calc(100vh-64px)]">
-      <section className="h-full bg-mint/50 rounded-2xl border border-aqua/40 p-8 flex flex-col">
-        <div className="flex items-center gap-2 mb-6">
-          <img src={appLogo} alt="CardWise logo" className="w-8 h-8" />
-          <span className="font-semibold text-navy">CardWise</span>
-        </div>
+    <main className="max-w-4xl mx-auto px-6 py-10">
+      <div className="grid md:grid-cols-2 gap-8">
+        <section>
+          <h1 className="text-3xl font-semibold mb-2">Log In</h1>
+          <p className="text-navy/80 mb-6">
+            Enter your email and password to access your CardWise dashboard.
+          </p>
 
-        <h1 className="text-4xl font-bold text-navy mb-1">Welcome Back</h1>
-        <p className="text-navy/70 mb-6">Please enter your details</p>
+          {error && (
+            <div className="mb-4">
+              <Alert variant="error">{error}</Alert>
+            </div>
+          )}
 
-        {successMessage && (
-          <Alert 
-            type="success" 
-            message={successMessage} 
-            onClose={() => setSuccessMessage("")}
-          />
-        )}
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <TextField
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+            />
 
-        <button
-          type="button"
-          className="w-full rounded-md bg-aqua/40 text-navy py-2 mb-4 hover:bg-aqua/60"
-        >
-          ⨁ Sign in with Google
-        </button>
+            <PasswordField
+              label="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
 
-        <div className="flex items-center gap-3 text-navy/60 text-sm mb-4">
-          <div className="h-px bg-navy/20 flex-1" />
-          or
-          <div className="h-px bg-navy/20 flex-1" />
-        </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full mt-2 rounded-xl bg-navy text-white py-3 font-medium hover:bg-aqua hover:text-navy transition disabled:opacity-60"
+            >
+              {loading ? "Logging in..." : "Log In"}
+            </button>
+          </form>
 
-        <form className="space-y-4 grow">
-          <TextField label="Email Address" type="email" placeholder="you@example.com" />
-          <PasswordField label="Password" />
-
-          <button
-            type="submit"
-            className="btn-primary w-full"
-          >
-            Log In
-          </button>
-        </form>
-
-        <p className="mt-4 text-sm">
-          Don’t have an account yet?{" "}
-          <Link to="/signup" className="underline hover:text-aqua">Sign Up</Link>
-        </p>
-      </section>
-
-      <aside className="h-full rounded-2xl overflow-hidden border border-aqua/40">
-        <img src={picture} alt="Financial dashboard illustration" className="w-full h-full object-cover" />
-      </aside>
+          <p className="mt-4 text-sm text-navy/80">
+            Don’t have an account?{" "}
+            <Link to="/signup" className="underline">
+              Sign up
+            </Link>
+          </p>
+        </section>
+      </div>
     </main>
   );
 }
