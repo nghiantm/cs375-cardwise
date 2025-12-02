@@ -49,6 +49,7 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [dateRange, setDateRange] = useState<"all" | "month" | "ytd" | "year">("month");
 
   // Fetch transactions on component mount
   useEffect(() => {
@@ -79,12 +80,46 @@ export default function Dashboard() {
     }
   };
 
+  // Filter transactions based on date range
+  const getFilteredTransactions = () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    return transactions.filter(t => {
+      const transactionDate = new Date(t.date);
+      
+      switch (dateRange) {
+        case "month":
+          // Current month
+          return transactionDate.getMonth() === currentMonth &&
+                 transactionDate.getFullYear() === currentYear;
+        
+        case "ytd":
+          // Year to date (Jan 1 to today)
+          return transactionDate.getFullYear() === currentYear &&
+                 transactionDate <= now;
+        
+        case "year":
+          // Entire current year
+          return transactionDate.getFullYear() === currentYear;
+        
+        case "all":
+        default:
+          // All time
+          return true;
+      }
+    });
+  };
+
+  const filteredTransactions = getFilteredTransactions();
+
   // Calculate total spend
-  const totalSpend = transactions.reduce((sum, t) => sum + t.amount, 0);
+  const totalSpend = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
 
   // Calculate spend by category
   const categorySpend: CategorySpend[] = Object.entries(
-    transactions.reduce((acc, t) => {
+    filteredTransactions.reduce((acc, t) => {
       acc[t.category] = (acc[t.category] || 0) + t.amount;
       return acc;
     }, {} as Record<string, number>)
@@ -106,7 +141,7 @@ export default function Dashboard() {
     const dateStr = date.toISOString().split('T')[0];
     const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
     
-    const dayTransactions = transactions.filter(t => 
+    const dayTransactions = filteredTransactions.filter(t => 
       t.date.startsWith(dateStr)
     );
 
@@ -119,18 +154,22 @@ export default function Dashboard() {
 
     return {
       date: dayName,
-      ...cardSpends
+      ...cardSpends,
+      // Ensure all cards have a value (0 if no spending)
+      ...Object.fromEntries(
+        Object.keys(BANK_COLORS).map(card => [card, cardSpends[card] || 0])
+      )
     };
   });
 
   // Get recent 5 transactions
-  const recentTransactions = [...transactions]
+  const recentTransactions = [...filteredTransactions]
     .sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime())
     .slice(0, 5);
 
   // Calculate best card by category (most spending in each category)
   const bestCardsByCategory = Object.entries(
-    transactions.reduce((acc, t) => {
+    filteredTransactions.reduce((acc, t) => {
       if (!t.cardUsed) return acc;
       
       if (!acc[t.category]) {
@@ -151,6 +190,17 @@ export default function Dashboard() {
     .sort((a, b) => b.amount - a.amount)
     .slice(0, 4); // Top 4 categories
 
+  // Get date range label
+  const getDateRangeLabel = () => {
+    switch (dateRange) {
+      case "month": return "This Month";
+      case "ytd": return "Year to Date";
+      case "year": return "This Year";
+      case "all": return "All Time";
+      default: return "This Month";
+    }
+  };
+
   return (
     <main className="max-w-7xl mx-auto px-6 py-6 space-y-6">
 
@@ -159,9 +209,16 @@ export default function Dashboard() {
         <h1 className="text-2xl font-semibold">Hi, User</h1>
 
         <div className="flex gap-3">
-          <button className="px-3 py-1.5 rounded-lg border border-navy/30 bg-white text-navy hover:bg-aqua/20">
-            This Month ▾
-          </button>
+          <select
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value as "all" | "month" | "ytd" | "year")}
+            className="px-3 py-1.5 rounded-lg border border-navy/30 bg-white text-navy hover:bg-aqua/20 cursor-pointer"
+          >
+            <option value="month">This Month</option>
+            <option value="ytd">Year to Date</option>
+            <option value="year">This Year</option>
+            <option value="all">All Time</option>
+          </select>
 
           <Link
             to="/spending"
@@ -191,14 +248,14 @@ export default function Dashboard() {
         <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
           <div className="text-sm text-navy/70">Transactions</div>
           <div className="text-2xl font-semibold mt-1">
-            {loading ? "..." : transactions.length}
+            {loading ? "..." : filteredTransactions.length}
           </div>
         </div>
         
         <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
           <div className="text-sm text-navy/70">Cards Used</div>
           <div className="text-2xl font-semibold mt-1">
-            {loading ? "..." : new Set(transactions.map(t => t.cardUsed).filter(Boolean)).size}
+            {loading ? "..." : new Set(filteredTransactions.map(t => t.cardUsed).filter(Boolean)).size}
           </div>
         </div>
       </section>
@@ -220,7 +277,7 @@ export default function Dashboard() {
           <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
             <div className="flex items-center justify-between mb-2">
               <h2 className="font-semibold">Spend by Category</h2>
-              <div className="text-sm text-navy/70">All Time</div>
+              <div className="text-sm text-navy/70">{getDateRangeLabel()}</div>
             </div>
 
             {loading ? (
@@ -236,7 +293,7 @@ export default function Dashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={categorySpend as any}
+                      data={categorySpend as any[]}
                       dataKey="value"
                       nameKey="category"
                       cx="50%"
@@ -247,12 +304,15 @@ export default function Dashboard() {
                     >
                       {categorySpend.map((entry, index) => (
                         <Cell
-                          key={entry.category}
+                          key={`cell-${entry.category}`}
                           fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]}
                         />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, "Spend"]} />
+                    <Tooltip 
+                      formatter={(value: number) => [`$${value.toFixed(2)}`, "Spend"]} 
+                      contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc' }}
+                    />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
