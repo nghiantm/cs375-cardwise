@@ -1,55 +1,100 @@
 const bcrypt = require('bcrypt');
 const User = require('../models/User');
 
-
-exports.register = async (req, res,next) => {
-    try {
-    const {email , password, firstName, lastName} = req.body;
+// POST /api/users/register
+exports.register = async (req, res, next) => {
+  try {
+    const { email, password, firstName, lastName } = req.body;
 
     if (!email || !password) {
-        return res.status(400).json({
-            success:false,
-            message: 'Email and password are required'
-        })
+      return res.status(400).json({
+        success: false,
+        message: 'Email and password are required',
+      });
     }
+
     if (!firstName || !lastName) {
-        return res.status(400).json({
-            success:false,
-            message: 'First name and last name are required'
-        })
+      return res.status(400).json({
+        success: false,
+        message: 'First name and last name are required',
+      });
     }
-    const existingUser = await User.exists({ email: email });
+
+    const existingUser = await User.exists({ email: email.toLowerCase() });
     if (existingUser) {
-        return res.status(409).json({
-            success:false,
-            message: 'User already exists'
-        })
+      return res.status(409).json({
+        success: false,
+        message: 'User already exists',
+      });
     }
+
     const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(password, saltRounds); // i would like to later use Oauth
+    const passwordHash = await bcrypt.hash(password, saltRounds);
 
     const newUser = await User.create({
-        email,
-        passwordHash,
-        profile: {
-            firstName,
-            lastName
-        }
+      email: email.toLowerCase(),
+      passwordHash,
+      profile: {
+        firstName,
+        lastName,
+      },
     });
 
     return res.status(201).json({
-        success: true,
-        message: 'User registered successfully',
-        data: {
-            id: newUser._id,
-            email: newUser.email,
-            firstName: newUser.profile.firstName,
-            lastName: newUser.profile.lastName
-        }
+      success: true,
+      message: 'User registered successfully',
+      data: {
+        id: newUser._id,
+        email: newUser.email,
+        firstName: newUser.profile.firstName,
+        lastName: newUser.profile.lastName,
+      },
     });
-} catch (error) {
+  } catch (error) {
     next(error);
-}
+  }
+};
 
-    
-}
+// POST /api/users/login
+exports.login = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and password are required',
+      });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password',
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password',
+      });
+    }
+
+    // JWT will be added later – for now, just confirm login.
+    return res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      data: {
+        id: user._id,
+        email: user.email,
+        firstName: user.profile.firstName,
+        lastName: user.profile.lastName,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
