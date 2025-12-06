@@ -93,6 +93,47 @@ async function login(req, res, next) {
         email: user.email,
         firstName: user.profile?.firstName,
         lastName: user.profile?.lastName,
+        ownedCards: user.ownedCards || [],
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// PATCH /api/users/:id/owned-cards
+async function updateOwnedCards(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { cardIds } = req.body;
+
+    if (!Array.isArray(cardIds)) {
+      return res.status(400).json({
+        success: false,
+        message: 'cardIds must be an array of card_id strings',
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      { ownedCards: cardIds },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Owned cards updated',
+      data: {
+        id: user._id,
+        email: user.email,
+        ownedCards: user.ownedCards,
       },
     });
   } catch (error) {
@@ -103,4 +144,5 @@ async function login(req, res, next) {
 module.exports = {
   register,
   login,
+  updateOwnedCards,
 };

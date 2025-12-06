@@ -37,20 +37,17 @@ export default function Login() {
       }
 
       if (!res.ok) {
-        // This will show messages like "Invalid email or password"
         setError(data?.message || `Login failed (status ${res.status})`);
         setLoading(false);
         return;
       }
-      if (data?.data) {
-  localStorage.setItem("cardwise_user", JSON.stringify(data.data));
-}   
-      // later we can store JWT here:
-      // if (data.token) {
-      //   localStorage.setItem("cardwise_token", data.token);
-      // }
 
-      navigate("/dashboard");
+      if (data?.data) {
+        localStorage.setItem("cardwise_user", JSON.stringify(data.data));
+      }
+
+      // NEW: go to My Cards flow
+      navigate("/my-cards");
     } catch (err) {
       console.error("Login error:", err);
       if (err instanceof Error) {

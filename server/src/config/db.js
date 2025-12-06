@@ -8,11 +8,18 @@ const connectDB = async () => {
     return;
   }
 
-  // mongoose.set('strictQuery', false);
-
   try {
-    await mongoose.connect(uri); //Why are we using await here?
+    await mongoose.connect(uri);
     console.log('Successfully connected to MongoDB');
+
+    console.log('DB name:', mongoose.connection.name);
+    const collections = await mongoose.connection.db
+      .listCollections()
+      .toArray();
+    console.log(
+      'Collections:',
+      collections.map((c) => c.name)
+    );
 
     mongoose.connection.on('error', (err) => {
       console.error('MongoDB connection error:', err);
@@ -22,10 +29,10 @@ const connectDB = async () => {
       console.warn('MongoDB disconnected');
     });
   } catch (err) {
-    //console.log("mongo uri loaded: ", uri);
     console.error('Failed to connect to MongoDB:', err.message);
   }
 };
+
 
 const closeDB = async () => {
   try {
