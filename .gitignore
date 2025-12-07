@@ -6,3 +6,11 @@
 /server/node_modules
 /server/.env*
 /node_modules/
+
+# Development tools (local only - not pushed to remote)
+/server/dev-tools/
+server.log
+/tmp/server.log
+/FIREBASE_AUTH*
+/FIREBASE_SETUP*
+

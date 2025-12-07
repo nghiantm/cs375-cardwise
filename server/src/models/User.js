@@ -11,7 +11,13 @@ const userSchema = new mongoose.Schema(
     },
     passwordHash: {
       type: String,
-      required: true,
+      required: false, // Made optional for Firebase-only users
+    },
+    // Firebase UID for users who sign up via Firebase
+    firebaseUid: {
+      type: String,
+      unique: true,
+      sparse: true, // Allows null values while maintaining uniqueness for non-null values
     },
     profile: {
       firstName: { type: String, required: true },

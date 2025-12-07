@@ -13,16 +13,17 @@ async function getCardMap(cardIds) {
   return map;
 }
 
-// GET /api/recommendations/my-cards?userId=...
-// best card per category, restricted to user's owned cards
+// GET /api/recommendations/my-cards
+// best card per category, restricted to authenticated user's owned cards
 exports.getBestForUserCards = async (req, res, next) => {
   try {
-    const { userId } = req.query;
+    // Get userId from authenticated user (set by auth middleware)
+    const userId = req.user?.id;
 
     if (!userId) {
-      return res.status(400).json({
+      return res.status(401).json({
         success: false,
-        message: 'userId is required',
+        message: 'Authentication required',
       });
     }
 

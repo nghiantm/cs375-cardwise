@@ -1,12 +1,9 @@
 // server/src/controllers/spendingController.js
 const Spending = require('../models/Spending');
 
-// NOTE: This controller still uses a hard-coded userId for now.
-// Once auth is implemented, this should come from req.user._id (JWT middleware).
-
 exports.createSpending = async (req, res, next) => {
   // POST /api/spending
-  // Create a new spending entry
+  // Create a new spending entry for authenticated user
   try {
     const { amount, category, date, merchant, notes, cardUsed, cardId } = req.body;
 
@@ -18,8 +15,15 @@ exports.createSpending = async (req, res, next) => {
       });
     }
 
-    // Temporary: hardcoded userId until auth is wired up
-    const userId = '691e5bb8367d68ed3a766bfd';
+    // Get userId from authenticated user (set by auth middleware)
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+      });
+    }
 
     const newSpending = await Spending.create({
       userId,
@@ -34,7 +38,7 @@ exports.createSpending = async (req, res, next) => {
 
     // Optionally populate related fields
     await newSpending.populate('userId', 'profile.firstName profile.lastName');
-    await newSpending.populate('cardId', 'bank name network');
+    await newSpending.populate('cardId', 'card_name bank_id');
 
     return res.status(201).json({
       id: newSpending._id,
@@ -49,9 +53,17 @@ exports.createSpending = async (req, res, next) => {
 
 exports.getAllSpendings = async (req, res, next) => {
   // GET /api/spending
+  // Get all spending entries for authenticated user
   try {
-    // Temporary: hardcoded userId until auth is wired up
-    const userId = '691e5bb8367d68ed3a766bfd';
+    // Get userId from authenticated user (set by auth middleware)
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+      });
+    }
 
     const { category, startDate, endDate } = req.query; // Optional filters
     const filter = { userId };
@@ -71,7 +83,7 @@ exports.getAllSpendings = async (req, res, next) => {
 
     const spendings = await Spending.find(filter)
       .populate('userId', 'profile.firstName')
-      .populate('cardId', 'bank name network')
+      .populate('cardId', 'card_name bank_id')
       .sort({ date: -1 }); // Newest first
 
     return res.status(200).json({
@@ -86,12 +98,21 @@ exports.getAllSpendings = async (req, res, next) => {
 
 exports.getSpendingById = async (req, res, next) => {
   // GET /api/spending/:id
+  // Get a specific spending entry (only if it belongs to authenticated user)
   try {
     const { id } = req.params;
+    const userId = req.user?.id;
 
-    const spending = await Spending.findById(id)
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+      });
+    }
+
+    const spending = await Spending.findOne({ _id: id, userId })
       .populate('userId', 'profile.firstName profile.lastName')
-      .populate('cardId', 'bank name network');
+      .populate('cardId', 'card_name bank_id');
 
     if (!spending) {
       return res.status(404).json({
@@ -111,8 +132,18 @@ exports.getSpendingById = async (req, res, next) => {
 
 exports.updateSpending = async (req, res, next) => {
   // PUT /api/spending/:id
+  // Update a spending entry (only if it belongs to authenticated user)
   try {
     const { id } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+      });
+    }
+
     const { amount, category, date, merchant, notes, cardUsed, cardId } = req.body;
 
     const updateData = {};
@@ -124,12 +155,16 @@ exports.updateSpending = async (req, res, next) => {
     if (cardUsed !== undefined) updateData.cardUsed = cardUsed;
     if (cardId !== undefined) updateData.cardId = cardId;
 
-    const updated = await Spending.findByIdAndUpdate(id, updateData, {
-      new: true,
-      runValidators: true,
-    })
+    const updated = await Spending.findOneAndUpdate(
+      { _id: id, userId }, // Only update if belongs to this user
+      updateData,
+      {
+        new: true,
+        runValidators: true,
+      }
+    )
       .populate('userId', 'profile.firstName profile.lastName')
-      .populate('cardId', 'bank name network');
+      .populate('cardId', 'card_name bank_id');
 
     if (!updated) {
       return res.status(404).json({
@@ -150,9 +185,19 @@ exports.updateSpending = async (req, res, next) => {
 
 exports.deleteSpending = async (req, res, next) => {
   // DELETE /api/spending/:id
+  // Delete a spending entry (only if it belongs to authenticated user)
   try {
     const { id } = req.params;
-    const deleted = await Spending.findByIdAndDelete(id);
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+      });
+    }
+
+    const deleted = await Spending.findOneAndDelete({ _id: id, userId });
 
     if (!deleted) {
       return res.status(404).json({

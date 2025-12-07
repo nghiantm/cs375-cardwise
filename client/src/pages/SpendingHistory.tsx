@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Alert from "../components/Alert";
 
-// Note: User ID is hardcoded in the backend controller for now
-// const CURRENT_USER_ID = "691e5bb8367d68ed3a766bfd";
+// Development mode: Backend uses hardcoded user when USE_DEV_AUTH=true
+// Production mode: Backend requires JWT token in Authorization header
 
 interface Transaction {
   _id: string;
@@ -231,11 +231,17 @@ export default function SpendingHistory() {
 
       {/* Success Message */}
       {successMessage && (
-        <Alert 
-          type="success" 
-          message={successMessage} 
-          onClose={() => setSuccessMessage("")}
-        />
+        <div className="relative">
+          <Alert variant="success">
+            {successMessage}
+          </Alert>
+          <button
+            onClick={() => setSuccessMessage("")}
+            className="absolute top-2 right-2 text-emerald-700 hover:text-emerald-900"
+          >
+            ✕
+          </button>
+        </div>
       )}
 
       {/* Search, Sort, and Filter Controls */}
