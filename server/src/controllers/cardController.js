@@ -5,32 +5,28 @@ const Card = require('../models/Card');
 exports.createCard = async (req, res, next) => {
   try {
     const {
-      bank,
-      name,
-      network,
-      annualFee,
-      foreignTransactionFee,
-      rewards,
-      signupBonus,
-      tags,
+      card_id,
+      card_name,
+      card_type,
+      bank_id,
+      img_url,
+      annual_fee,
     } = req.body;
 
-    if (!bank || !name) {
+    if (!card_id || !card_name || !bank_id || !card_type) {
       return res.status(400).json({
         success: false,
-        message: 'Bank and card name are required',
+        message: 'card_id, card_name, bank_id, and card_type are required',
       });
     }
 
     const newCard = await Card.create({
-      bank,
-      name,
-      network,
-      annualFee,
-      foreignTransactionFee,
-      rewards,
-      signupBonus,
-      tags,
+      card_id,
+      card_name,
+      card_type,
+      bank_id,
+      img_url,
+      annual_fee,
     });
 
     return res.status(201).json({
@@ -39,11 +35,11 @@ exports.createCard = async (req, res, next) => {
       data: newCard,
     });
   } catch (error) {
-    // handle duplicate (bank + name) nicely
+    // handle duplicate card_id
     if (error.code === 11000) {
       return res.status(409).json({
         success: false,
-        message: 'Card with this bank and name already exists',
+        message: 'Card with this card_id already exists',
       });
     }
     next(error);
@@ -53,13 +49,13 @@ exports.createCard = async (req, res, next) => {
 // GET /api/cards
 exports.getAllCards = async (req, res, next) => {
   try {
-    const { bank, network } = req.query;
+    const { bank_id, card_type } = req.query;
     const filter = {};
 
-    if (bank) filter.bank = bank;
-    if (network) filter.network = network;
+    if (bank_id) filter.bank_id = bank_id;
+    if (card_type) filter.card_type = card_type;
 
-    const cards = await Card.find(filter).sort({ bank: 1, name: 1 });
+    const cards = await Card.find(filter).sort({ bank_id: 1, card_name: 1 });
 
     return res.status(200).json({
       success: true,

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+// client/src/pages/Dashboard.tsx
+import { useEffect, useState } from "react";
 import {
   PieChart,
   Pie,
@@ -38,11 +39,6 @@ interface Transaction {
 interface CategorySpend {
   category: string;
   value: number;
-}
-
-interface DailySpend {
-  date: string;
-  [key: string]: number | string;
 }
 
 export default function Dashboard() {
@@ -130,37 +126,47 @@ export default function Dashboard() {
   // Find top category
   const topCategory = categorySpend.length > 0 ? categorySpend[0].category : "—";
 
-  // Calculate spend by card over last 7 days
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (6 - i));
-    return date;
-  });
-
-  const dailySpend: DailySpend[] = last7Days.map(date => {
-    const dateStr = date.toISOString().split('T')[0];
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-    
-    const dayTransactions = filteredTransactions.filter(t => 
-      t.date.startsWith(dateStr)
-    );
-
-    const cardSpends = dayTransactions.reduce((acc, t) => {
-      if (t.cardUsed) {
-        acc[t.cardUsed] = (acc[t.cardUsed] || 0) + t.amount;
+  // Calculate daily spend based on date range
+  const getDailySpendData = () => {
+    // Group transactions by date
+    const dateGroups = filteredTransactions.reduce((acc, t) => {
+      const date = t.date.split('T')[0];
+      if (!acc[date]) {
+        acc[date] = [];
       }
+      acc[date].push(t);
       return acc;
-    }, {} as Record<string, number>);
+    }, {} as Record<string, Transaction[]>);
 
-    return {
-      date: dayName,
-      ...cardSpends,
-      // Ensure all cards have a value (0 if no spending)
-      ...Object.fromEntries(
-        Object.keys(BANK_COLORS).map(card => [card, cardSpends[card] || 0])
-      )
-    };
-  });
+    // Sort dates and get all unique dates
+    const sortedDates = Object.keys(dateGroups).sort();
+    
+    if (sortedDates.length === 0) return [];
+
+    // Create daily spend data
+    return sortedDates.map(dateStr => {
+      const date = new Date(dateStr);
+      const dayTransactions = dateGroups[dateStr];
+
+      const cardSpends = dayTransactions.reduce((acc, t) => {
+        if (t.cardUsed) {
+          acc[t.cardUsed] = (acc[t.cardUsed] || 0) + t.amount;
+        }
+        return acc;
+      }, {} as Record<string, number>);
+
+      return {
+        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        ...cardSpends,
+        // Ensure all cards have a value (0 if no spending)
+        ...Object.fromEntries(
+          Object.keys(BANK_COLORS).map(card => [card, cardSpends[card] || 0])
+        )
+      };
+    });
+  };
+
+  const dailySpend = getDailySpendData();
 
   // Get recent 5 transactions
   const recentTransactions = [...filteredTransactions]
@@ -286,7 +292,7 @@ export default function Dashboard() {
               </div>
             ) : categorySpend.length === 0 ? (
               <div className="h-56 flex items-center justify-center text-navy/60">
-                No spending data yet
+                No spending data for this period
               </div>
             ) : (
               <div className="h-56">
@@ -324,7 +330,7 @@ export default function Dashboard() {
           <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
             <div className="flex items-center justify-between mb-2">
               <h2 className="font-semibold">Spending Over Time</h2>
-              <div className="text-sm text-navy/70">Last 7 Days</div>
+              <div className="text-sm text-navy/70">{getDateRangeLabel()}</div>
             </div>
 
             {loading ? (
@@ -333,7 +339,7 @@ export default function Dashboard() {
               </div>
             ) : dailySpend.length === 0 ? (
               <div className="h-56 flex items-center justify-center text-navy/60">
-                No spending data yet
+                No spending data for this period
               </div>
             ) : (
               <div className="h-56">

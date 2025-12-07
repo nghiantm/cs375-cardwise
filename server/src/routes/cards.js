@@ -1,21 +1,22 @@
-// server/src/routes/cards.js
 const express = require('express');
 const router = express.Router();
-const cardController = require('../controllers/cardController');
 
-// POST /api/cards
-router.post('/', cardController.createCard);
+// ✅ use RELATIVE path and correct spelling: cardController
+const cardController = require('../controllers/cardController.js');
 
-// GET /api/cards
+// GET /api/cards - Get all cards
 router.get('/', cardController.getAllCards);
 
-// GET /api/cards/:id
+// GET /api/cards/:id - Get card by ID
 router.get('/:id', cardController.getCardById);
 
-// PUT /api/cards/:id
+// POST /api/cards - Create new card
+router.post('/', cardController.createCard);
+
+// PUT /api/cards/:id - Update card
 router.put('/:id', cardController.updateCard);
 
-// DELETE /api/cards/:id
+// DELETE /api/cards/:id - Delete card
 router.delete('/:id', cardController.deleteCard);
 
 module.exports = router;
