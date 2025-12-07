@@ -37,6 +37,13 @@ export default function SpendingHistory() {
   const [submitError, setSubmitError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
+  // Search, Sort, and Filter states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"date" | "amount">("date");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterCard, setFilterCard] = useState("");
+
   // Fetch all transactions on component mount
   useEffect(() => {
     fetchTransactions();
@@ -150,6 +157,56 @@ export default function SpendingHistory() {
     });
   };
 
+  // Filter, search, and sort transactions
+  const getFilteredAndSortedTransactions = () => {
+    let filtered = [...transactions];
+
+    // Search filter (searches in merchant, category, notes)
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(t => 
+        (t.merchant?.toLowerCase().includes(query)) ||
+        (t.category.toLowerCase().includes(query)) ||
+        (t.notes?.toLowerCase().includes(query)) ||
+        (t.cardUsed?.toLowerCase().includes(query))
+      );
+    }
+
+    // Category filter
+    if (filterCategory) {
+      filtered = filtered.filter(t => t.category === filterCategory);
+    }
+
+    // Card filter
+    if (filterCard) {
+      filtered = filtered.filter(t => t.cardUsed === filterCard);
+    }
+
+    // Sorting
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      
+      if (sortBy === "date") {
+        const dateA = new Date(a.createdAt || a.date).getTime();
+        const dateB = new Date(b.createdAt || b.date).getTime();
+        comparison = dateB - dateA;
+      } else if (sortBy === "amount") {
+        comparison = b.amount - a.amount;
+      }
+
+      return sortOrder === "desc" ? comparison : -comparison;
+    });
+
+    return filtered;
+  };
+
+  const filteredTransactions = getFilteredAndSortedTransactions();
+
+  // Get unique categories and cards from transactions for filter dropdowns
+  const uniqueCategories = Array.from(new Set(transactions.map(t => t.category))).sort();
+  const uniqueCards = Array.from(new Set(transactions.map(t => t.cardUsed).filter(Boolean))).sort();
+
+
   return (
     <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
       
@@ -180,6 +237,91 @@ export default function SpendingHistory() {
           onClose={() => setSuccessMessage("")}
         />
       )}
+
+      {/* Search, Sort, and Filter Controls */}
+      <section className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
+        <div className="grid gap-3 md:grid-cols-4">
+          
+          {/* Search */}
+          <div className="md:col-span-2">
+            <input
+              type="text"
+              placeholder="🔍 Search by merchant, category, card, or notes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-lg border border-navy/30 px-3 py-2 bg-white text-sm"
+            />
+          </div>
+
+          {/* Sort By */}
+          <div>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as "date" | "amount")}
+              className="w-full rounded-lg border border-navy/30 px-3 py-2 bg-white text-sm"
+            >
+              <option value="date">Sort by: Date</option>
+              <option value="amount">Sort by: Amount</option>
+            </select>
+          </div>
+
+          {/* Sort Order */}
+          <div>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
+              className="w-full rounded-lg border border-navy/30 px-3 py-2 bg-white text-sm"
+            >
+              <option value="desc">{sortBy === "date" ? "Newest First" : "Highest First"}</option>
+              <option value="asc">{sortBy === "date" ? "Oldest First" : "Lowest First"}</option>
+            </select>
+          </div>
+
+          {/* Category Filter */}
+          <div>
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="w-full rounded-lg border border-navy/30 px-3 py-2 bg-white text-sm"
+            >
+              <option value="">All Categories</option>
+              {uniqueCategories.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Card Filter */}
+          <div>
+            <select
+              value={filterCard}
+              onChange={(e) => setFilterCard(e.target.value)}
+              className="w-full rounded-lg border border-navy/30 px-3 py-2 bg-white text-sm"
+            >
+              <option value="">All Cards</option>
+              {uniqueCards.map(card => (
+                <option key={card} value={card}>{card}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Clear Filters Button */}
+          {(searchQuery || filterCategory || filterCard) && (
+            <div className="md:col-span-2">
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setFilterCategory("");
+                  setFilterCard("");
+                }}
+                className="w-full px-3 py-2 rounded-lg border border-navy/30 bg-white text-navy text-sm hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition"
+              >
+                ✕ Clear Filters
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Add Transaction Form */}
       {showAddForm && (
@@ -297,7 +439,14 @@ export default function SpendingHistory() {
 
       {/* Transaction List */}
       <section className="bg-white/70 border border-aqua/40 rounded-2xl p-6">
-        <h2 className="font-semibold text-lg mb-4">Recent Transactions</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-lg">Recent Transactions</h2>
+          {!loading && transactions.length > 0 && (
+            <span className="text-sm text-navy/60">
+              Showing {filteredTransactions.length} of {transactions.length} transactions
+            </span>
+          )}
+        </div>
 
         {loading && (
           <div className="text-center py-8 text-navy/60">Loading transactions...</div>
@@ -315,17 +464,15 @@ export default function SpendingHistory() {
           </div>
         )}
 
-        {!loading && !error && transactions.length > 0 && (
+        {!loading && !error && transactions.length > 0 && filteredTransactions.length === 0 && (
+          <div className="text-center py-8 text-navy/60">
+            No transactions match your search or filters. Try adjusting your criteria.
+          </div>
+        )}
+
+        {!loading && !error && filteredTransactions.length > 0 && (
           <div className="space-y-3">
-            {transactions
-              .sort((a, b) => {
-                // Sort by createdAt (when transaction was added) instead of transaction date
-                // This ensures proper ordering even for transactions added at different times on the same date
-                const dateA = new Date(a.createdAt || a.date).getTime();
-                const dateB = new Date(b.createdAt || b.date).getTime();
-                return dateB - dateA; // Newest first
-              })
-              .map((transaction) => (
+            {filteredTransactions.map((transaction) => (
               <div
                 key={transaction._id}
                 className="flex items-center justify-between p-4 bg-white rounded-lg border border-navy/20 hover:border-aqua/60 transition"

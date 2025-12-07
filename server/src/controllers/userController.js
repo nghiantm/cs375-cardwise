@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const User = require('../models/User');
 
 // POST /api/users/register
-async function register(req, res, next) {
+exports.register = async (req, res, next) => {
   try {
     const { email, password, firstName, lastName } = req.body;
 
@@ -21,7 +21,7 @@ async function register(req, res, next) {
       });
     }
 
-    const existingUser = await User.exists({ email });
+    const existingUser = await User.exists({ email: email.toLowerCase() });
     if (existingUser) {
       return res.status(409).json({
         success: false,
@@ -33,7 +33,7 @@ async function register(req, res, next) {
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
     const newUser = await User.create({
-      email,
+      email: email.toLowerCase(),
       passwordHash,
       profile: {
         firstName,
@@ -54,10 +54,10 @@ async function register(req, res, next) {
   } catch (error) {
     next(error);
   }
-}
+};
 
 // POST /api/users/login
-async function login(req, res, next) {
+exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
@@ -68,7 +68,7 @@ async function login(req, res, next) {
       });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -84,7 +84,7 @@ async function login(req, res, next) {
       });
     }
 
-    // later we can add JWT here
+    // JWT will be added later – for now, just confirm login.
     return res.status(200).json({
       success: true,
       message: 'Login successful',
@@ -99,10 +99,10 @@ async function login(req, res, next) {
   } catch (error) {
     next(error);
   }
-}
+};
 
 // PATCH /api/users/:id/owned-cards
-async function updateOwnedCards(req, res, next) {
+exports.updateOwnedCards = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { cardIds } = req.body;
@@ -139,10 +139,4 @@ async function updateOwnedCards(req, res, next) {
   } catch (error) {
     next(error);
   }
-}
-
-module.exports = {
-  register,
-  login,
-  updateOwnedCards,
 };
