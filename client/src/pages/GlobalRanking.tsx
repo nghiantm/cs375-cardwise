@@ -1,5 +1,6 @@
 // client/src/pages/GlobalRanking.tsx
 import { useEffect, useState } from "react";
+import { useAuthFetch } from "../context/AuthContext";
 import Alert from "../components/Alert";
 
 type GlobalCard = {
@@ -13,6 +14,7 @@ type GlobalCard = {
 };
 
 export default function GlobalRanking() {
+  const authFetch = useAuthFetch();
   const [cards, setCards] = useState<GlobalCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +22,7 @@ export default function GlobalRanking() {
   useEffect(() => {
     async function fetchGlobal() {
       try {
-        const res = await fetch(
+        const res = await authFetch(
           "http://localhost:3000/api/recommendations/global"
         );
         const json = await res.json();
@@ -35,7 +37,7 @@ export default function GlobalRanking() {
       }
     }
     fetchGlobal();
-  }, []);
+  }, [authFetch]);
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">

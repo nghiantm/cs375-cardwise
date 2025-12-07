@@ -1,7 +1,16 @@
-import { NavLink, Link, Outlet } from "react-router-dom";
+import { NavLink, Link, Outlet, useNavigate } from "react-router-dom";
 import icon from "../assets/icon.png"; 
+import { useAuth } from "../context/AuthContext";
 
 export default function Layout() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
   return (
     <div className="min-h-screen bg-mint text-navy">
       <header className="h-16 border-b border-aqua/30 bg-mint/80 backdrop-blur">
@@ -54,7 +63,7 @@ export default function Layout() {
               Best Cards
             </NavLink>
             <NavLink 
-              to="/card-ranking" 
+              to="/global-ranking" 
               className={({ isActive }) =>
                 `underline-offset-4 hover:text-aqua px-1 py-2 ${
                   isActive ? "underline text-navy" : "text-navy/70"
@@ -76,13 +85,29 @@ export default function Layout() {
           </nav>
 
           {/* Auth links - Right aligned */}
-          <div className="flex gap-4 text-base">
-            <Link to="/login" className="underline underline-offset-4 hover:text-aqua px-1 py-2">
-              Log In
-            </Link>
-            <Link to="/signup" className="underline underline-offset-4 hover:text-aqua px-1 py-2">
-              Sign Up
-            </Link>
+          <div className="flex gap-4 text-base items-center">
+            {user ? (
+              <>
+                <span className="text-navy/70 text-sm">
+                  {user.firstName ? `${user.firstName}` : user.email}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="underline underline-offset-4 hover:text-aqua px-1 py-2"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="underline underline-offset-4 hover:text-aqua px-1 py-2">
+                  Log In
+                </Link>
+                <Link to="/signup" className="underline underline-offset-4 hover:text-aqua px-1 py-2">
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>

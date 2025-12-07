@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Alert from "../components/Alert";
+import { useAuthFetch } from "../context/AuthContext";
 
 // Development mode: Backend uses hardcoded user when USE_DEV_AUTH=true
 // Production mode: Backend requires JWT token in Authorization header
@@ -18,6 +19,7 @@ interface Transaction {
 }
 
 export default function SpendingHistory() {
+  const authFetch = useAuthFetch();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -54,7 +56,7 @@ export default function SpendingHistory() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:3000/api/spending");
+      const response = await authFetch("http://localhost:3000/api/spending");
 
       if (!response.ok) {
         throw new Error("Failed to fetch transactions");
@@ -100,7 +102,7 @@ export default function SpendingHistory() {
     setSubmitLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3000/api/spending", {
+      const response = await authFetch("http://localhost:3000/api/spending", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

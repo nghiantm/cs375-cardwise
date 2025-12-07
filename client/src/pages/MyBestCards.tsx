@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Alert from "../components/Alert";
+import { useAuth, useAuthFetch } from "../context/AuthContext";
 
 type BestCard = {
   category: string;
@@ -15,22 +16,23 @@ type BestCard = {
 
 export default function MyBestCards() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const authFetch = useAuthFetch();
   const [data, setData] = useState<BestCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("cardwise_user");
-    if (!stored) {
+    if (!user) {
       navigate("/login");
       return;
     }
 
-    const user = JSON.parse(stored);
-
     async function fetchBest() {
+      if (!user) return; // TypeScript guard
+      
       try {
-        const res = await fetch(
+        const res = await authFetch(
           `http://localhost:3000/api/recommendations/my-cards?userId=${user.id}`
         );
         const json = await res.json();
@@ -46,7 +48,7 @@ export default function MyBestCards() {
     }
 
     fetchBest();
-  }, [navigate]);
+  }, [navigate, user, authFetch]);
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">

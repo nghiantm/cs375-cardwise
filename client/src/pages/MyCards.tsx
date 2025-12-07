@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "../components/Alert";
+import { useAuth, useAuthFetch } from "../context/AuthContext";
 
 type Card = {
   _id: string;
@@ -21,6 +22,8 @@ type UserInfo = {
 
 export default function MyCards() {
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
+  const authFetch = useAuthFetch();
   const [user, setUser] = useState<UserInfo | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -30,25 +33,23 @@ export default function MyCards() {
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("cardwise_user");
-    if (!stored) {
+    // Use AuthContext user instead of localStorage
+    if (!authUser) {
       navigate("/login");
       return;
     }
-    try {
-      const parsed = JSON.parse(stored);
-      setUser(parsed);
-      // if in the future you store ownedCards in localStorage,
-      // you can preselect them here.
-    } catch {
-      navigate("/login");
+    setUser(authUser);
+    
+    // Preselect owned cards
+    if (authUser.ownedCards && authUser.ownedCards.length > 0) {
+      setSelected(new Set(authUser.ownedCards));
     }
-  }, [navigate]);
+  }, [authUser, navigate]);
 
   useEffect(() => {
     async function fetchCards() {
       try {
-        const res = await fetch("http://localhost:3000/api/cards");
+        const res = await authFetch("http://localhost:3000/api/cards");
         const data = await res.json();
         if (!res.ok) {
           throw new Error(data.message || "Failed to load cards");
@@ -61,7 +62,7 @@ export default function MyCards() {
       }
     }
     fetchCards();
-  }, []);
+  }, [authFetch]);
 
   const toggleCard = (cardId: string) => {
     setSelected((prev) => {
@@ -79,7 +80,7 @@ export default function MyCards() {
     setSaving(true);
 
     try {
-      const res = await fetch(
+      const res = await authFetch(
         `http://localhost:3000/api/users/${user.id}/owned-cards`,
         {
           method: "PATCH",

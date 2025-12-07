@@ -4,9 +4,11 @@ import { Link, useNavigate } from "react-router-dom";
 import TextField from "../components/TextField";
 import PasswordField from "../components/PasswordField";
 import Alert from "../components/Alert";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,34 +21,8 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:3000/api/users/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      let data: any = null;
-      try {
-        data = await res.json();
-      } catch {
-        throw new Error(
-          `Server returned non-JSON response (status ${res.status})`
-        );
-      }
-
-      if (!res.ok) {
-        setError(data?.message || `Login failed (status ${res.status})`);
-        setLoading(false);
-        return;
-      }
-
-      if (data?.data) {
-        localStorage.setItem("cardwise_user", JSON.stringify(data.data));
-      }
-
-      // NEW: go to My Cards flow
+      await login(email, password);
+      // Session is now persisted across tabs via localStorage
       navigate("/my-cards");
     } catch (err) {
       console.error("Login error:", err);

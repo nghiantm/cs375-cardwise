@@ -14,6 +14,7 @@ import {
   Legend,
 } from "recharts";
 import { Link } from "react-router-dom";
+import { useAuth, useAuthFetch } from "../context/AuthContext";
 
 const CATEGORY_COLORS = ["#0C2C47", "#8ADAB2", "#FFD580", "#97D3CD", "#2D5652"];
 
@@ -42,6 +43,8 @@ interface CategorySpend {
 }
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  const authFetch = useAuthFetch();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -57,7 +60,7 @@ export default function Dashboard() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:3000/api/spending");
+      const response = await authFetch("http://localhost:3000/api/spending");
 
       if (!response.ok) {
         throw new Error("Failed to fetch transactions");
@@ -212,7 +215,9 @@ export default function Dashboard() {
 
       {/* Top Controls */}
       <section className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Hi, User</h1>
+        <h1 className="text-2xl font-semibold">
+          Hi, {user?.firstName || "User"}
+        </h1>
 
         <div className="flex gap-3">
           <select
