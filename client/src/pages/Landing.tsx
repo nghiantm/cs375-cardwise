@@ -1,7 +1,18 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import icon from "../assets/icon.png";
 
 export default function Landing() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
+
   return (
     <main className="h-[calc(100vh-64px)] flex flex-col items-center justify-center gap-10">
 
@@ -16,12 +27,20 @@ export default function Landing() {
         </h1>
       </div>
 
-      <Link
-        to="/dashboard"
-        className="px-5 py-2.5 rounded-lg bg-navy text-white hover:bg-aqua hover:text-navy transition text-lg"
-      >
-        Go to Dashboard
-      </Link>
+      <div className="flex gap-4">
+        <Link
+          to="/login"
+          className="px-6 py-3 rounded-lg bg-navy text-white hover:bg-aqua hover:text-navy transition text-lg"
+        >
+          Log In
+        </Link>
+        <Link
+          to="/signup"
+          className="px-6 py-3 rounded-lg border-2 border-navy text-navy hover:bg-navy hover:text-white transition text-lg"
+        >
+          Sign Up
+        </Link>
+      </div>
     </main>
   );
 }

@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import TextField from "../components/TextField";
 import PasswordField from "../components/PasswordField";
+import { useAuth } from "../context/AuthContext";
 import appLogo from "../assets/appLogo.png";
 import picture from "../assets/picture.png";
 
@@ -14,6 +15,7 @@ import picture from "../assets/picture.png";
 
 export default function Signup() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -84,8 +86,9 @@ export default function Signup() {
         throw new Error(data.message || "Registration failed");
       }
 
-      // Success - redirect to login with success message
-      navigate("/login", { state: { message: "Registration successful! Please log in." } });
+      // Success - auto-login and redirect to onboarding
+      await login(formData.email, formData.password);
+      navigate("/onboarding");
 
     } catch (err: any) {
       // Check if it's a network error (fetch failed)

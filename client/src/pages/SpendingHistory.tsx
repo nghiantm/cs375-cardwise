@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Alert from "../components/Alert";
-import { useAuthFetch } from "../context/AuthContext";
+import { useAuth, useAuthFetch } from "../context/AuthContext";
 
 // Development mode: Backend uses hardcoded user when USE_DEV_AUTH=true
 // Production mode: Backend requires JWT token in Authorization header
@@ -19,11 +19,13 @@ interface Transaction {
 }
 
 export default function SpendingHistory() {
+  const { user } = useAuth();
   const authFetch = useAuthFetch();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
+  const [cardNamesMap, setCardNamesMap] = useState<Record<string, string>>({});
 
   // Form state
   const [formData, setFormData] = useState({
@@ -49,7 +51,11 @@ export default function SpendingHistory() {
   // Fetch all transactions on component mount
   useEffect(() => {
     fetchTransactions();
-  }, []);
+    if (user?.ownedCards && user.ownedCards.length > 0) {
+      fetchCardNames();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.ownedCards]);
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -75,6 +81,47 @@ export default function SpendingHistory() {
     }
   };
 
+  const fetchCardNames = async () => {
+    try {
+      const response = await authFetch("http://localhost:3000/api/cards");
+      if (!response.ok) return;
+
+      const data = await response.json();
+      const allCards = data.data || [];
+
+      // Create a map of card_id -> card_name
+      const nameMap: Record<string, string> = {};
+      allCards.forEach((card: any) => {
+        if (user?.ownedCards?.includes(card.card_id)) {
+          nameMap[card.card_id] = card.card_name;
+        }
+      });
+      setCardNamesMap(nameMap);
+    } catch (err) {
+      // Silently fail - will use formatted card_id as fallback
+      console.error("Failed to fetch card names:", err);
+    }
+  };
+
+  // Get user's card names from ownedCards array
+  const getUserCardNames = (): string[] => {
+    if (!user?.ownedCards || user.ownedCards.length === 0) {
+      return [];
+    }
+    
+    // Use fetched card names if available, otherwise format the card_id
+    return user.ownedCards.map(cardId => {
+      if (cardNamesMap[cardId]) {
+        return cardNamesMap[cardId];
+      }
+      // Fallback: format card_id
+      return cardId
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    });
+  };
+
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -95,7 +142,7 @@ export default function SpendingHistory() {
     }
 
     if (!formData.cardUsed) {
-      setSubmitError("Please select a card");
+      setSubmitError("Please select a payment method");
       return;
     }
 
@@ -393,20 +440,26 @@ export default function SpendingHistory() {
 
               {/* Card Used */}
               <div className="flex flex-col">
-                <label className="text-sm font-medium mb-1">Card Used *</label>
+                <label className="text-sm font-medium mb-1">Payment Method *</label>
                 <select
                   value={formData.cardUsed}
                   onChange={(e) => handleChange("cardUsed", e.target.value)}
                   className="rounded-lg border border-navy/30 p-2 bg-white"
                   required
                 >
-                  <option value="">Select Card</option>
-                  <option value="Chase">Chase</option>
-                  <option value="Bank of America">Bank of America</option>
-                  <option value="Capital One">Capital One</option>
-                  <option value="Discover">Discover</option>
-                  <option value="American Express">American Express</option>
+                  <option value="">Select Payment Method</option>
+                  <option value="Cash">Cash</option>
+                  {getUserCardNames().map((cardName) => (
+                    <option key={cardName} value={cardName}>
+                      {cardName}
+                    </option>
+                  ))}
                 </select>
+                {getUserCardNames().length === 0 && (
+                  <p className="text-xs text-navy/60 mt-1">
+                    💡 Add cards from <Link to="/my-best-cards" className="text-aqua underline">My Cards</Link> to track card-specific spending
+                  </p>
+                )}
               </div>
 
               {/* Merchant */}

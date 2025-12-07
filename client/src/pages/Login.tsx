@@ -23,7 +23,7 @@ export default function Login() {
     try {
       await login(email, password);
       // Session is now persisted across tabs via localStorage
-      navigate("/my-cards");
+      navigate("/dashboard");
     } catch (err) {
       console.error("Login error:", err);
       if (err instanceof Error) {

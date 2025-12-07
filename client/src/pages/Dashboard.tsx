@@ -52,8 +52,10 @@ export default function Dashboard() {
 
   // Fetch transactions on component mount
   useEffect(() => {
+    if (!user) return;
     fetchTransactions();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const fetchTransactions = async () => {
     setLoading(true);

@@ -43,7 +43,7 @@ export default function Layout() {
               Spending
             </NavLink>
             <NavLink 
-              to="/my-cards" 
+              to="/my-best-cards" 
               className={({ isActive }) =>
                 `underline-offset-4 hover:text-aqua px-1 py-2 ${
                   isActive ? "underline text-navy" : "text-navy/70"
@@ -53,14 +53,14 @@ export default function Layout() {
               My Cards
             </NavLink>
             <NavLink 
-              to="/my-best-cards" 
+              to="/personal-ranking" 
               className={({ isActive }) =>
                 `underline-offset-4 hover:text-aqua px-1 py-2 ${
                   isActive ? "underline text-navy" : "text-navy/70"
                 }`
               }
             >
-              Best Cards
+              Personal Ranking
             </NavLink>
             <NavLink 
               to="/global-ranking" 
@@ -70,17 +70,7 @@ export default function Layout() {
                 }`
               }
             >
-              Ranking
-            </NavLink>
-            <NavLink 
-              to="/add-statements" 
-              className={({ isActive }) =>
-                `underline-offset-4 hover:text-aqua px-1 py-2 ${
-                  isActive ? "underline text-navy" : "text-navy/70"
-                }`
-              }
-            >
-              Add Statements
+              Global Ranking
             </NavLink>
           </nav>
 
