@@ -15,7 +15,10 @@ const app = express();
 // Enable CORS for all origins. In production, configure this appropriately.
 app.use(
   cors({
-    origin: 'http://localhost:5173', // Your Vite dev server
+    origin: [
+      'http://localhost:5173', // Your Vite dev server
+      'https://drexel-cardwise.vercel.app' // Your production frontend URL
+    ],
     credentials: true,
   })
 );
