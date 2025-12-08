@@ -87,22 +87,51 @@ exports.getBestForUserCards = async (req, res, next) => {
 // rank all cards by their best category cashback_equiv_pct
 exports.getGlobalRanking = async (req, res, next) => {
   try {
-    const rewards = await Reward.find();
+    const category = req.query?.category?.trim();
 
-    // per card: keep best category reward
-    const bestByCard = {};
-    for (const r of rewards) {
-      const current = bestByCard[r.card_id];
-      if (!current || r.cashback_equiv_pct > current.cashback_equiv_pct) {
-        bestByCard[r.card_id] = r;
-      }
+    if (!category) {
+      return res.status(400).json({
+        success: false,
+        message: 'Query parameter "category" is required',
+      });
     }
 
-    const cardIds = Object.keys(bestByCard);
+    // fetch rewards for requested category plus the \"all\" baseline
+    const rewards = await Reward.find({
+      category: { $in: [category, 'all'] },
+    });
+
+    // per card: keep best reward for target category, fall back to \"all\"
+    const bestByCard = {};
+    for (const r of rewards) {
+      const existing = bestByCard[r.card_id] || {};
+      if (r.category === category) {
+        if (
+          !existing.target ||
+          r.cashback_equiv_pct > existing.target.cashback_equiv_pct
+        ) {
+          existing.target = r;
+        }
+      } else if (r.category === 'all') {
+        if (
+          !existing.fallback ||
+          r.cashback_equiv_pct > existing.fallback.cashback_equiv_pct
+        ) {
+          existing.fallback = r;
+        }
+      }
+      bestByCard[r.card_id] = existing;
+    }
+
+    const cardIds = Object.keys(bestByCard).filter((cardId) => {
+      const entry = bestByCard[cardId];
+      return entry.target || entry.fallback;
+    });
     const cardMap = await getCardMap(cardIds);
 
     let ranking = cardIds.map((cardId) => {
-      const reward = bestByCard[cardId];
+      const entry = bestByCard[cardId];
+      const reward = entry.target || entry.fallback;
       const card = cardMap[cardId];
 
       return {

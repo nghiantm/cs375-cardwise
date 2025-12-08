@@ -1,6 +1,10 @@
 // client/src/pages/GlobalRanking.tsx
 import { useEffect, useState, useMemo } from "react";
 import Alert from "../components/Alert";
+import { CategoryHelper } from "../utils/categoryHelper";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+const CATEGORY_OPTIONS = CategoryHelper.getCategories();
 
 type GlobalCard = {
   card_id: string;
@@ -16,54 +20,56 @@ export default function GlobalRanking() {
   const [cards, setCards] = useState<GlobalCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    CategoryHelper.getDefaultCategory()
+  );
   const [sortBy, setSortBy] = useState<"cashback" | "name">("cashback");
 
   useEffect(() => {
+    let ignore = false;
+    setLoading(true);
+    setError(null);
+
     async function fetchGlobal() {
       try {
-        const res = await fetch(
-          "http://localhost:3000/api/recommendations/global"
-        );
+        const url = new URL(`${API_URL}/recommendations/global`);
+        url.searchParams.set("category", selectedCategory);
+
+        const res = await fetch(url.toString());
         const json = await res.json();
         if (!res.ok) {
           throw new Error(json.message || "Failed to load ranking");
         }
-        setCards(json.data || []);
+        if (!ignore) {
+          setCards(json.data || []);
+        }
       } catch (err: any) {
-        setError(err.message || "Failed to load ranking");
+        if (!ignore) {
+          setError(err.message || "Failed to load ranking");
+        }
       } finally {
-        setLoading(false);
+        if (!ignore) {
+          setLoading(false);
+        }
       }
     }
     fetchGlobal();
-  }, []);
-
-  // Get unique categories
-  const categories = useMemo(() => {
-    return [...new Set(cards.map(c => c.best_category))].sort();
-  }, [cards]);
+    return () => {
+      ignore = true;
+    };
+  }, [selectedCategory]);
 
   // Filter and sort cards
   const filteredAndSortedCards = useMemo(() => {
-    let result = cards;
-    
-    // Filter by category
-    if (selectedCategory !== "all") {
-      result = result.filter(c => c.best_category === selectedCategory);
-    }
-    
-    // Sort
-    result = [...result].sort((a, b) => {
+    const result = [...cards].sort((a, b) => {
       if (sortBy === "cashback") {
         return b.best_cashback_equiv_pct - a.best_cashback_equiv_pct;
       } else {
         return (a.card_name || a.card_id).localeCompare(b.card_name || b.card_id);
       }
     });
-    
     return result;
-  }, [cards, selectedCategory, sortBy]);
+  }, [cards, sortBy]);
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
@@ -77,9 +83,7 @@ export default function GlobalRanking() {
 
       {error && <Alert variant="error">{error}</Alert>}
 
-      {loading && <div className="text-navy/60">Loading ranking…</div>}
-
-      {!loading && !error && cards.length > 0 && (
+      {!error && (
         <>
           {/* Filters and Sort */}
           <div className="flex flex-wrap gap-4 items-center bg-white/70 border border-aqua/40 rounded-lg p-4">
@@ -93,10 +97,9 @@ export default function GlobalRanking() {
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="px-3 py-1.5 text-sm bg-white border border-aqua/40 rounded-md focus:outline-none focus:ring-2 focus:ring-aqua"
               >
-                <option value="all">All ({cards.length})</option>
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat.toUpperCase()} ({cards.filter(c => c.best_category === cat).length})
+                {CATEGORY_OPTIONS.map((cat) => (
+                  <option key={cat.value} value={cat.value}>
+                    {cat.label}
                   </option>
                 ))}
               </select>
@@ -123,56 +126,65 @@ export default function GlobalRanking() {
           </div>
 
           <section className="bg-white/70 border border-aqua/40 rounded-2xl p-6 overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-aqua/40 text-navy/70">
-                <tr>
-                  <th className="py-2 pr-4">#</th>
-                  <th className="py-2 pr-4">Card</th>
-                  <th className="py-2 pr-4">Bank</th>
-                  <th className="py-2 pr-4">Best Category</th>
-                  <th className="py-2 pr-4">Best Cashback</th>
-                  <th className="py-2 pr-4">Annual Fee</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAndSortedCards.map((c, idx) => (
-                  <tr key={c.card_id} className="border-b border-aqua/20 hover:bg-mint/20 transition">
-                    <td className="py-2 pr-4">{idx + 1}</td>
-                    <td className="py-2 pr-4">
-                      <div className="flex items-center gap-2">
-                        {c.img_url && (
-                          <img
-                            src={c.img_url}
-                            alt={c.card_name}
-                            className="w-10 h-7 object-contain"
-                          />
-                        )}
-                        <span>{c.card_name || c.card_id}</span>
-                      </div>
-                    </td>
-                    <td className="py-2 pr-4">
-                      {c.bank_id?.replace(/_/g, " ")}
-                    </td>
-                    <td className="py-2 pr-4">
-                      <span className="uppercase tracking-wide font-medium">
-                        {c.best_category}
-                      </span>
-                    </td>
-                    <td className="py-2 pr-4">
-                      <span className="font-semibold text-aqua">
-                        {c.best_cashback_equiv_pct.toFixed(1)}%
-                      </span>
-                    </td>
-                    <td className="py-2 pr-4">
-                      ${typeof c.annual_fee === "number" ? c.annual_fee : 0}
-                    </td>
+            {loading ? (
+              <div className="text-center py-8 text-navy/60">Loading ranking...</div>
+            ) : cards.length === 0 ? (
+              <div className="text-center py-8 text-navy/60">
+                No cards found for this category.
+              </div>
+            ) : (
+              <table className="min-w-full text-left text-sm">
+                <thead className="border-b border-aqua/40 text-navy/70">
+                  <tr>
+                    <th className="py-2 pr-4">#</th>
+                    <th className="py-2 pr-4">Card</th>
+                    <th className="py-2 pr-4">Bank</th>
+                    <th className="py-2 pr-4">Best Category</th>
+                    <th className="py-2 pr-4">Best Cashback</th>
+                    <th className="py-2 pr-4">Annual Fee</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredAndSortedCards.map((c, idx) => (
+                    <tr key={c.card_id} className="border-b border-aqua/20 hover:bg-mint/20 transition">
+                      <td className="py-2 pr-4">{idx + 1}</td>
+                      <td className="py-2 pr-4">
+                        <div className="flex items-center gap-2">
+                          {c.img_url && (
+                            <img
+                              src={c.img_url}
+                              alt={c.card_name}
+                              className="w-10 h-7 object-contain"
+                            />
+                          )}
+                          <span>{c.card_name || c.card_id}</span>
+                        </div>
+                      </td>
+                      <td className="py-2 pr-4">
+                        {c.bank_id?.replace(/_/g, " ")}
+                      </td>
+                      <td className="py-2 pr-4">
+                        <span className="uppercase tracking-wide font-medium">
+                          {CategoryHelper.formatLabel(c.best_category)}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-4">
+                        <span className="font-semibold text-aqua">
+                          {c.best_cashback_equiv_pct.toFixed(1)}%
+                        </span>
+                      </td>
+                      <td className="py-2 pr-4">
+                        ${typeof c.annual_fee === "number" ? c.annual_fee : 0}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </section>
         </>
       )}
     </main>
   );
 }
+
