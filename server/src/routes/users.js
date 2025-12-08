@@ -16,4 +16,7 @@ router.patch('/:id/owned-cards', smartAuthenticate, userController.updateOwnedCa
 // GET /api/users/me - Get current user info (smart: dev or JWT)
 router.get('/me', smartAuthenticate, userController.getCurrentUser);
 
+// GET /api/users/:id/investment-simulations - Estimate savings and investments
+router.get('/:id/investment-simulations', smartAuthenticate, userController.getInvestmentSimulation);
+
 module.exports = router;

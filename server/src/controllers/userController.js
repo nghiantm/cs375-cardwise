@@ -1,6 +1,8 @@
 // server/src/controllers/userController.js
 const bcrypt = require('bcrypt');
 const User = require('../models/User');
+const Card = require('../models/Card');
+const Reward = require('../models/Reward');
 const { generateToken } = require('../utils/jwt');
 const { verifyFirebaseToken, getUserFromFirebaseToken } = require('../config/firebase');
 
@@ -236,6 +238,106 @@ exports.updateOwnedCards = async (req, res, next) => {
   }
 };
 
+// GET /api/users/:id/investment-simulations
+// Estimate category savings and investment projections
+exports.getInvestmentSimulation = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!req.user || String(req.user.id) !== String(id)) {
+      return res.status(403).json({
+        success: false,
+        message: 'You can only view simulations for your own account',
+      });
+    }
+
+    const user = await User.findById(id).lean();
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    const ownedCards = Array.isArray(user.ownedCards) ? user.ownedCards : [];
+    if (ownedCards.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Add cards to your profile to run the investment simulator',
+      });
+    }
+
+    const spendingByCategory = extractSpendingFromQuery(req.query);
+    const categories = Object.keys(spendingByCategory);
+
+    if (categories.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one *_spending query parameter with a positive amount is required',
+      });
+    }
+
+    const bestRewards = {};
+    const cardIds = new Set();
+
+    for (const category of categories) {
+      const reward = await findBestRewardForCategory(category, ownedCards);
+      if (!reward) {
+        continue;
+      }
+      bestRewards[category] = {
+        reward,
+        spend: spendingByCategory[category],
+      };
+      cardIds.add(reward.card_id);
+    }
+
+    if (Object.keys(bestRewards).length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No reward data available for the requested categories',
+      });
+    }
+
+    const cardMap = await getCardDetails(Array.from(cardIds));
+    let totalSavings = 0;
+    const cardsResponse = {};
+
+    for (const [category, info] of Object.entries(bestRewards)) {
+      const { reward, spend } = info;
+      const savings = Number((spend * (reward.cashback_equiv_pct / 100)).toFixed(2));
+      totalSavings += savings;
+
+      const card = cardMap[reward.card_id] || {};
+
+      cardsResponse[category] = {
+        card_id: reward.card_id,
+        card_name: card.card_name,
+        bank_id: card.bank_id,
+        annual_fee: card.annual_fee,
+        img_url: card.img_url,
+        cashback_equiv_pct: reward.cashback_equiv_pct,
+        saving: savings,
+      };
+    }
+
+    const investmentResults = calculateInvestmentGrowth(totalSavings);
+    const summaryInfo = buildInvestmentSummary(investmentResults);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        cards: cardsResponse,
+        investment_results: investmentResults,
+        total_monthly_savings: Number(totalSavings.toFixed(2)),
+        investment_summary: summaryInfo,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // GET /api/users/me
 // Get current authenticated user's information
 exports.getCurrentUser = async (req, res, next) => {
@@ -269,3 +371,143 @@ exports.getCurrentUser = async (req, res, next) => {
     next(error);
   }
 };
+
+// Helpers
+const CATEGORY_ALIAS = {
+  grocery: ['groceries'],
+  groceries: ['groceries'],
+  online: ['online_shopping'],
+  pharma: ['pharmacy'],
+  pharmacy: ['pharmacy'],
+};
+
+function normalizeCategoryKey(rawKey = '') {
+  return rawKey
+    .toLowerCase()
+    .replace(/_spending$/, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function extractSpendingFromQuery(query) {
+  const spending = {};
+  for (const [key, value] of Object.entries(query)) {
+    if (!key.includes('spending')) continue;
+    const normalizedKey = normalizeCategoryKey(key);
+    if (!normalizedKey) continue;
+
+    const amount = Array.isArray(value) ? value[value.length - 1] : value;
+    const parsed = parseFloat(amount);
+    if (Number.isNaN(parsed) || parsed <= 0) {
+      continue;
+    }
+
+    spending[normalizedKey] = (spending[normalizedKey] || 0) + parsed;
+  }
+  return spending;
+}
+
+function getCategoryCandidates(category) {
+  const normalized = category.toLowerCase();
+  const candidates = new Set([normalized]);
+  const aliasList = CATEGORY_ALIAS[normalized];
+  if (aliasList) {
+    aliasList.forEach((alias) => candidates.add(alias));
+  }
+
+  if (normalized.endsWith('y')) {
+    candidates.add(`${normalized.slice(0, -1)}ies`);
+  }
+
+  return Array.from(candidates);
+}
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+async function findBestRewardForCategory(category, allowedCards = []) {
+  if (!Array.isArray(allowedCards) || allowedCards.length === 0) {
+    return null;
+  }
+
+  const baseCardFilter = { card_id: { $in: allowedCards } };
+  const candidates = getCategoryCandidates(category);
+  for (const candidate of candidates) {
+    const reward = await Reward.findOne({
+      category: new RegExp(`^${escapeRegex(candidate)}$`, 'i'),
+      ...baseCardFilter,
+    })
+      .sort({ cashback_equiv_pct: -1 })
+      .lean();
+    if (reward) {
+      return reward;
+    }
+  }
+
+  return Reward.findOne({
+    category: new RegExp('^all$', 'i'),
+    ...baseCardFilter,
+  })
+    .sort({ cashback_equiv_pct: -1 })
+    .lean();
+}
+
+async function getCardDetails(cardIds) {
+  if (!cardIds.length) {
+    return {};
+  }
+  const cards = await Card.find({ card_id: { $in: cardIds } }).lean();
+  return cards.reduce((acc, card) => {
+    acc[card.card_id] = card;
+    return acc;
+  }, {});
+}
+
+function calculateInvestmentGrowth(baseAmount) {
+  const ANNUAL_RATE = 0.1; // assumed 10% yearly return
+  const monthlyRate = ANNUAL_RATE / 12;
+  const horizons = [1, 6, 12, 18, 24]; // months
+
+  const results = horizons.reduce((acc, months) => {
+    const principal = baseAmount * months;
+    let futureValue;
+
+    if (monthlyRate === 0) {
+      futureValue = principal;
+    } else {
+      futureValue = baseAmount * ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate);
+    }
+
+    const interest = futureValue - principal;
+    acc[months] = {
+      principal: Number(principal.toFixed(2)),
+      interest: Number(interest.toFixed(2)),
+      total: Number(futureValue.toFixed(2)),
+    };
+    return acc;
+  }, {});
+
+  results.metadata = {
+    annual_rate: ANNUAL_RATE,
+    monthly_rate: monthlyRate,
+  };
+
+  return results;
+}
+
+function buildInvestmentSummary(results) {
+  const keys = Object.keys(results).filter((key) => key !== 'metadata');
+  if (keys.length === 0) {
+    return null;
+  }
+  const sortedMonths = keys.map(Number).sort((a, b) => a - b);
+  const finalMonths = sortedMonths[sortedMonths.length - 1];
+  const finalData = results[finalMonths];
+  return {
+    months: finalMonths,
+    principal: finalData.principal,
+    interest: finalData.interest,
+    total: finalData.total,
+  };
+}

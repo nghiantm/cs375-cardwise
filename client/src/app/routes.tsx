@@ -8,7 +8,7 @@ import Signup from "../pages/Signup";
 import Onboarding from "../pages/Onboarding";
 import Dashboard from "../pages/Dashboard";
 import AddStatements from "../pages/AddStatements";
-import SpendingHistory from "../pages/SpendingHistory";
+import Spending from "../pages/Spending";
 import MyCards from "../pages/MyCards";
 import MyBestCards from "../pages/MyBestCards";
 import GlobalRanking from "../pages/GlobalRanking";
@@ -48,7 +48,7 @@ const router = createBrowserRouter([
       },
       { 
         path: "/spending", 
-        element: <ProtectedRoute><SpendingHistory /></ProtectedRoute> 
+        element: <ProtectedRoute><Spending /></ProtectedRoute> 
       },
     ],
   },
