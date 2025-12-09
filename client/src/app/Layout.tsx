@@ -24,7 +24,7 @@ export default function Layout() {
           <nav className="flex gap-6 text-base flex-1">
             
             <NavLink 
-              to="/" 
+              to="/dashboard" 
               className={({ isActive }) =>
                 `underline-offset-4 hover:text-aqua px-1 py-2 ${
                   isActive ? "underline text-navy" : "text-navy/70"
