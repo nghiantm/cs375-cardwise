@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import Alert from "../components/Alert";
 import { useAuth, useAuthFetch } from "../context/AuthContext";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+
 type Card = {
   _id: string;
   card_id: string;
@@ -49,7 +51,7 @@ export default function MyCards() {
   useEffect(() => {
     async function fetchCards() {
       try {
-        const res = await authFetch("http://localhost:3000/api/cards");
+        const res = await authFetch(`${API_URL}/cards`);
         const data = await res.json();
         if (!res.ok) {
           throw new Error(data.message || "Failed to load cards");
@@ -81,7 +83,7 @@ export default function MyCards() {
 
     try {
       const res = await authFetch(
-        `http://localhost:3000/api/users/${user.id}/owned-cards`,
+        `${API_URL}/users/${user.id}/owned-cards`,
         {
           method: "PATCH",
           headers: {

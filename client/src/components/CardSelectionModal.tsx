@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import Alert from "./Alert";
 import { useAuth, useAuthFetch } from "../context/AuthContext";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+
 type Card = {
   _id: string;
   card_id: string;
@@ -42,7 +44,7 @@ export default function CardSelectionModal({ isOpen, onClose, onSave }: CardSele
     
     async function fetchCards() {
       try {
-        const res = await authFetch("http://localhost:3000/api/cards");
+        const res = await authFetch(`${API_URL}/cards`);
         const data = await res.json();
         if (!res.ok) {
           throw new Error(data.message || "Failed to load cards");
@@ -74,7 +76,7 @@ export default function CardSelectionModal({ isOpen, onClose, onSave }: CardSele
 
     try {
       const res = await authFetch(
-        `http://localhost:3000/api/users/${authUser.id}/owned-cards`,
+        `${API_URL}/users/${authUser.id}/owned-cards`,
         {
           method: "PATCH",
           headers: {

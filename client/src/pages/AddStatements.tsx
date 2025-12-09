@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+
 export default function AddStatements() {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -21,7 +23,7 @@ export default function AddStatements() {
       const formData = new FormData();
       formData.append("statement", file);
 
-      const res = await fetch("http://localhost:3000/api/statements/upload", {
+      const res = await fetch(`${API_URL}/statements/upload`, {
         method: "POST",
         body: formData,
       });

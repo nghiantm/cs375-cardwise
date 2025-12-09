@@ -16,6 +16,8 @@ import {
 import { Link } from "react-router-dom";
 import { useAuth, useAuthFetch } from "../context/AuthContext";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+
 const CATEGORY_COLORS = ["#0C2C47", "#8ADAB2", "#FFD580", "#97D3CD", "#2D5652"];
 
 const BANK_COLORS: Record<string, string> = {
@@ -62,7 +64,7 @@ export default function Dashboard() {
     setError("");
 
     try {
-      const response = await authFetch("http://localhost:3000/api/spending");
+      const response = await authFetch(`${API_URL}/spending`);
 
       if (!response.ok) {
         throw new Error("Failed to fetch transactions");

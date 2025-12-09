@@ -3,6 +3,8 @@ import { useEffect, useState, useMemo } from "react";
 import { useAuth, useAuthFetch } from "../context/AuthContext";
 import Alert from "../components/Alert";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+
 type CategoryRanking = {
   category: string;
   card_id: string;
@@ -29,7 +31,7 @@ export default function PersonalRanking() {
       setLoading(true);
       try {
         const res = await authFetch(
-          `http://localhost:3000/api/recommendations/my-cards?userId=${user?.id}`
+          `${API_URL}/recommendations/my-cards?userId=${user?.id}`
         );
         const json = await res.json();
         if (!res.ok) {

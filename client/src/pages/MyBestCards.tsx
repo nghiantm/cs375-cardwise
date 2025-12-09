@@ -5,6 +5,8 @@ import Alert from "../components/Alert";
 import CardSelectionModal from "../components/CardSelectionModal";
 import { useAuth, useAuthFetch } from "../context/AuthContext";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+
 type BestCard = {
   category: string;
   card_id: string;
@@ -42,7 +44,7 @@ export default function MyBestCards() {
     setLoading(true);
     try {
       const res = await authFetch(
-        `http://localhost:3000/api/recommendations/my-cards?userId=${user.id}`
+        `${API_URL}/recommendations/my-cards?userId=${user.id}`
       );
       const json = await res.json();
       if (!res.ok) {

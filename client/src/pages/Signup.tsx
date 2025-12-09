@@ -7,6 +7,8 @@ import { useAuth } from "../context/AuthContext";
 import appLogo from "../assets/appLogo.png";
 import picture from "../assets/picture.png";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+
   const isValidEmail = (email: string): boolean => {
     // Regular expression for email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -67,7 +69,7 @@ export default function Signup() {
     setLoading(true);  // Show loading state
 
     try {
-      const response = await fetch("http://localhost:3000/api/users/register", {
+      const response = await fetch(`${API_URL}/users/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
