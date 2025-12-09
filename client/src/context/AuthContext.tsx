@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { signInWithPopup, type UserCredential } from 'firebase/auth';
 import { auth, googleProvider } from '../config/firebase';
@@ -228,7 +228,7 @@ export function useAuth() {
 export function useAuthFetch() {
   const { token } = useAuth();
 
-  return async (url: string, options: RequestInit = {}) => {
+  return useCallback(async (url: string, options: RequestInit = {}) => {
     console.log('useAuthFetch - token:', token ? token.substring(0, 20) + '...' : 'NO TOKEN'); // DEBUG
     
     const headers = {
@@ -242,5 +242,5 @@ export function useAuthFetch() {
       ...options,
       headers,
     });
-  };
+  }, [token]);
 }
