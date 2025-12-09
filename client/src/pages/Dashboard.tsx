@@ -95,7 +95,7 @@ export default function Dashboard() {
             Go to Spending
           </Link>
           <Link
-            to="/my-cards"
+            to="/my-best-cards"
             className="px-4 py-2 rounded-lg border border-navy/30 bg-white text-navy hover:bg-aqua/20 transition text-sm"
           >
             Go to My Cards
@@ -121,7 +121,7 @@ export default function Dashboard() {
             </li>
             <li>
               Add the cards you own on the{" "}
-              <Link to="/my-cards" className="text-aqua underline">
+              <Link to="/my-best-cards" className="text-aqua underline">
                 My Cards
               </Link>{" "}
               page.
@@ -215,14 +215,14 @@ export default function Dashboard() {
                 <span className="font-semibold">{ownedCardsCount}</span>{" "}
                 {ownedCardsCount === 1 ? "card" : "cards"} saved. View details
                 or update them on the{" "}
-                <Link to="/my-cards" className="text-aqua underline">
+                <Link to="/my-best-cards" className="text-aqua underline">
                   My Cards
                 </Link>{" "}
                 page.
               </p>
             </div>
             <Link
-              to="/my-cards"
+              to="/my-best-cards"
               className="px-4 py-2 rounded-lg border border-navy/30 bg-white text-navy hover:bg-aqua/20 transition text-sm"
             >
               Manage Cards

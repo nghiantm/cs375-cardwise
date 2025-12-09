@@ -47,7 +47,7 @@ export default function Layout() {
             </NavLink>
 
             <NavLink
-              to="/my-cards"
+              to="/my-best-cards"
               className={({ isActive }) =>
                 `underline-offset-4 hover:text-aqua px-1 py-2 ${
                   isActive ? "underline text-navy" : "text-navy/70"
