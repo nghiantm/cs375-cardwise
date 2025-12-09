@@ -13,6 +13,18 @@ type Card = {
   annual_fee?: number;
 };
 
+// Format bank name: "american_express" -> "American Express"
+const formatBankName = (bankId: string) => {
+  return bankId
+    .replace(/_/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map(
+      (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    )
+    .join(" ");
+};
+
 export default function Onboarding() {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
@@ -50,7 +62,7 @@ export default function Onboarding() {
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(cardId)) next.delete(cardId);
-      else next.add(cardId);
+      else next.add(cardId); // can select as many as they want
       return next;
     });
   };
@@ -89,21 +101,21 @@ export default function Onboarding() {
     navigate("/dashboard");
   };
 
+  const isDisabled = saving || selected.size === 0;
+
   return (
     <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
       <header>
         <h1 className="text-2xl font-semibold">Welcome! Let's Get Started</h1>
         <p className="text-navy/70 text-sm mt-2">
-          Select the credit cards you currently own to get personalized recommendations.
-          You can always add more cards later.
+          Select the credit cards you currently own to get personalized
+          recommendations. You can always add more cards later.
         </p>
       </header>
 
       {error && <Alert variant="error">{error}</Alert>}
 
-      {loadingCards && (
-        <div className="text-navy/60">Loading cards…</div>
-      )}
+      {loadingCards && <div className="text-navy/60">Loading cards…</div>}
 
       {!loadingCards && cards.length === 0 && (
         <Alert variant="info">No cards found in the database.</Alert>
@@ -147,7 +159,7 @@ export default function Onboarding() {
                         {card.card_name}
                       </div>
                       <div className="text-xs text-navy/60 mt-1">
-                        {card.bank_id.replace(/_/g, " ")}
+                        {formatBankName(card.bank_id)}
                       </div>
                       {typeof card.annual_fee === "number" && (
                         <div className="text-xs text-navy/60 mt-1">
@@ -177,8 +189,12 @@ export default function Onboarding() {
           </div>
           <button
             onClick={handleSave}
-            disabled={saving || selected.size === 0}
-            className="px-6 py-3 rounded-lg bg-aqua text-white hover:bg-aqua/90 transition disabled:opacity-50"
+            disabled={isDisabled}
+            className={`px-6 py-3 rounded-lg font-medium transition ${
+              isDisabled
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-aqua text-white hover:bg-aqua/90 cursor-pointer shadow-sm"
+            }`}
           >
             {saving ? "Saving…" : "Continue"}
           </button>

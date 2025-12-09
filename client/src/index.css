@@ -9,10 +9,37 @@
 }
 
 @layer components {
-  .btn-primary {
-    @apply rounded-md bg-navy text-white py-2 px-4 hover:bg-aqua hover:text-navy transition;
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg border text-sm font-medium
+      px-4 py-2 transition
+      focus:outline-none focus:ring-2 focus:ring-aqua/60 focus:ring-offset-1
+      disabled:opacity-50 disabled:cursor-not-allowed;
   }
+
+  .btn-primary {
+    @apply btn bg-navy text-white border-navy
+      hover:bg-aqua hover:text-navy;
+  }
+
   .btn-secondary {
-    @apply rounded-md bg-aqua/40 text-navy py-2 px-4 hover:bg-aqua/60 transition;
+    @apply btn bg-white text-navy border-navy/30
+      hover:bg-navy hover:text-white;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center text-sm font-medium text-navy/80
+      hover:text-navy hover:underline;
+  }
+
+  .btn-pill {
+    @apply rounded-full px-3 py-1 text-xs font-medium;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1 text-xs;
+  }
+
+  .btn-link {
+    @apply text-sm font-medium text-aqua hover:text-aqua/80 underline;
   }
 }

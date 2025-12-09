@@ -1,6 +1,10 @@
+// client/src/components/PasswordField.tsx
 import { useState } from "react";
+import type React from "react";
 
-type Props = React.InputHTMLAttributes<HTMLInputElement> & { label: string };
+type Props = React.InputHTMLAttributes<HTMLInputElement> & {
+  label: string;
+};
 
 export default function PasswordField({ label, ...props }: Props) {
   const [show, setShow] = useState(false);
@@ -18,7 +22,7 @@ export default function PasswordField({ label, ...props }: Props) {
         <button
           type="button"
           aria-label={show ? "Hide password" : "Show password"}
-          onClick={() => setShow(v => !v)}
+          onClick={() => setShow((v) => !v)}
           className="absolute right-2 top-1/2 -translate-y-1/2 text-navy/70 hover:text-yellow"
         >
           {show ? "🙈" : "👁️"}

@@ -1,9 +1,11 @@
+// client/src/components/ProtectedRoute.tsx
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import type { ReactNode } from "react";
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
@@ -11,13 +13,11 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Only redirect after loading is complete and user is not authenticated
     if (!isLoading && !user) {
       navigate("/login", { replace: true });
     }
   }, [user, isLoading, navigate]);
 
-  // Show nothing while loading (prevents flash of protected content)
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -26,7 +26,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // Don't render children if not authenticated
   if (!user) {
     return null;
   }

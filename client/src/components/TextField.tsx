@@ -1,4 +1,9 @@
-type Props = React.InputHTMLAttributes<HTMLInputElement> & { label: string };
+// client/src/components/TextField.tsx
+import type React from "react";
+
+type Props = React.InputHTMLAttributes<HTMLInputElement> & {
+  label: string;
+};
 
 export default function TextField({ label, className = "", ...props }: Props) {
   return (

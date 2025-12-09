@@ -33,14 +33,12 @@ export default function MyCards() {
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    // Use AuthContext user instead of localStorage
     if (!authUser) {
       navigate("/login");
       return;
     }
     setUser(authUser);
-    
-    // Preselect owned cards
+
     if (authUser.ownedCards && authUser.ownedCards.length > 0) {
       setSelected(new Set(authUser.ownedCards));
     }

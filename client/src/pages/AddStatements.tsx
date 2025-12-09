@@ -37,7 +37,6 @@ export default function AddStatements() {
       setMessage(`Uploaded & processed: ${file.name}`);
       setFile(null);
       setUploading(false);
-
     } catch (err) {
       console.error(err);
       setMessage("Network error. Please make sure the server is running.");
@@ -47,7 +46,6 @@ export default function AddStatements() {
 
   return (
     <main className="max-w-4xl mx-auto px-6 py-8 space-y-6">
-      
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Upload Bank Statements</h1>
         <Link to="/spending" className="text-aqua hover:underline text-sm">
@@ -59,7 +57,8 @@ export default function AddStatements() {
       <section className="bg-white/70 border border-aqua/40 rounded-2xl p-6 space-y-4">
         <h2 className="font-semibold text-lg">Upload Statement</h2>
         <p className="text-sm text-navy/70">
-          Upload a PDF or CSV from your bank. We’ll automatically extract and categorize your transactions.
+          Upload a PDF or CSV from your bank. We’ll automatically extract and
+          categorize your transactions.
         </p>
 
         <label className="block w-full">

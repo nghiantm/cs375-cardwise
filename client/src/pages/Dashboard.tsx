@@ -1,476 +1,235 @@
 // client/src/pages/Dashboard.tsx
-import { useEffect, useState } from "react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-} from "recharts";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth, useAuthFetch } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 
-const CATEGORY_COLORS = ["#0C2C47", "#8ADAB2", "#FFD580", "#97D3CD", "#2D5652"];
+const STORAGE_KEY = "cardwise_monthly_budget";
 
-const BANK_COLORS: Record<string, string> = {
-  Chase: "#0C2C47",
-  "Bank of America": "#C0392B",
-  "Capital One": "#1F618D",
-  Discover: "#E67E22",
-  "American Express": "#2E7D32",
+type CategoryKey =
+  | "travel"
+  | "groceries"
+  | "gas"
+  | "online"
+  | "pharma"
+  | "other";
+
+type BudgetState = Record<CategoryKey, string>;
+
+const CATEGORY_FIELDS: Array<{ id: CategoryKey; label: string }> = [
+  { id: "travel", label: "Travel" },
+  { id: "groceries", label: "Groceries" },
+  { id: "gas", label: "Gas" },
+  { id: "online", label: "Online" },
+  { id: "pharma", label: "Pharmacy" },
+  { id: "other", label: "Other" },
+];
+
+const defaultBudget: BudgetState = {
+  travel: "",
+  groceries: "",
+  gas: "",
+  online: "",
+  pharma: "",
+  other: "",
 };
-
-interface Transaction {
-  _id: string;
-  amount: number;
-  category: string;
-  date: string;
-  merchant?: string;
-  notes?: string;
-  cardUsed?: string;
-  createdAt?: string;
-}
-
-interface CategorySpend {
-  category: string;
-  value: number;
-}
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const authFetch = useAuthFetch();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [dateRange, setDateRange] = useState<"all" | "month" | "ytd" | "year">("month");
+  const [budgets, setBudgets] = useState<BudgetState>({ ...defaultBudget });
 
-  // Fetch transactions on component mount
+  // Load saved monthly budget from localStorage
   useEffect(() => {
-    if (!user) return;
-    fetchTransactions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
-  const fetchTransactions = async () => {
-    setLoading(true);
-    setError("");
-
+    if (typeof window === "undefined") return;
     try {
-      const response = await authFetch("http://localhost:3000/api/spending");
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch transactions");
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as Partial<BudgetState>;
+        setBudgets((prev) => ({ ...prev, ...parsed }));
       }
-
-      const data = await response.json();
-      setTransactions(data.data || []);
-    } catch (err: any) {
-      if (err.message === "Failed to fetch" || err instanceof TypeError) {
-        setError("Unable to reach server. Please check your connection.");
-      } else {
-        setError(err.message || "Failed to load data");
-      }
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.warn("Failed to load dashboard budget", err);
     }
-  };
+  }, []);
 
-  // Filter transactions based on date range
-  const getFilteredTransactions = () => {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
+  const totalMonthlyBudget = useMemo(() => {
+    return CATEGORY_FIELDS.reduce((sum, field) => {
+      const value = parseFloat(budgets[field.id]) || 0;
+      return sum + value;
+    }, 0);
+  }, [budgets]);
 
-    return transactions.filter(t => {
-      const transactionDate = new Date(t.date);
-      
-      switch (dateRange) {
-        case "month":
-          // Current month
-          return transactionDate.getMonth() === currentMonth &&
-                 transactionDate.getFullYear() === currentYear;
-        
-        case "ytd":
-          // Year to date (Jan 1 to today)
-          return transactionDate.getFullYear() === currentYear &&
-                 transactionDate <= now;
-        
-        case "year":
-          // Entire current year
-          return transactionDate.getFullYear() === currentYear;
-        
-        case "all":
-        default:
-          // All time
-          return true;
-      }
-    });
-  };
+  const categoriesPlanned = useMemo(() => {
+    return CATEGORY_FIELDS.filter((field) => {
+      const value = parseFloat(budgets[field.id]) || 0;
+      return value > 0;
+    }).length;
+  }, [budgets]);
 
-  const filteredTransactions = getFilteredTransactions();
+  const ownedCardsCount =
+    (user as any)?.ownedCards && Array.isArray((user as any).ownedCards)
+      ? (user as any).ownedCards.length
+      : 0;
 
-  // Calculate total spend
-  const totalSpend = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
-
-  // Calculate spend by category
-  const categorySpend: CategorySpend[] = Object.entries(
-    filteredTransactions.reduce((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.amount;
-      return acc;
-    }, {} as Record<string, number>)
-  )
-    .map(([category, value]) => ({ category, value }))
-    .sort((a, b) => b.value - a.value);
-
-  // Find top category
-  const topCategory = categorySpend.length > 0 ? categorySpend[0].category : "—";
-
-  // Calculate daily spend based on date range
-  const getDailySpendData = () => {
-    // Group transactions by date
-    const dateGroups = filteredTransactions.reduce((acc, t) => {
-      const date = t.date.split('T')[0];
-      if (!acc[date]) {
-        acc[date] = [];
-      }
-      acc[date].push(t);
-      return acc;
-    }, {} as Record<string, Transaction[]>);
-
-    // Sort dates and get all unique dates
-    const sortedDates = Object.keys(dateGroups).sort();
-    
-    if (sortedDates.length === 0) return [];
-
-    // Create daily spend data
-    return sortedDates.map(dateStr => {
-      const date = new Date(dateStr);
-      const dayTransactions = dateGroups[dateStr];
-
-      const cardSpends = dayTransactions.reduce((acc, t) => {
-        if (t.cardUsed) {
-          acc[t.cardUsed] = (acc[t.cardUsed] || 0) + t.amount;
-        }
-        return acc;
-      }, {} as Record<string, number>);
-
-      return {
-        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        ...cardSpends,
-        // Ensure all cards have a value (0 if no spending)
-        ...Object.fromEntries(
-          Object.keys(BANK_COLORS).map(card => [card, cardSpends[card] || 0])
-        )
-      };
-    });
-  };
-
-  const dailySpend = getDailySpendData();
-
-  // Get recent 5 transactions
-  const recentTransactions = [...filteredTransactions]
-    .sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime())
-    .slice(0, 5);
-
-  // Calculate best card by category (most spending in each category)
-  const bestCardsByCategory = Object.entries(
-    filteredTransactions.reduce((acc, t) => {
-      if (!t.cardUsed) return acc;
-      
-      if (!acc[t.category]) {
-        acc[t.category] = {};
-      }
-      acc[t.category][t.cardUsed] = (acc[t.category][t.cardUsed] || 0) + t.amount;
-      return acc;
-    }, {} as Record<string, Record<string, number>>)
-  )
-    .map(([category, cards]) => {
-      const bestCard = Object.entries(cards).sort((a, b) => b[1] - a[1])[0];
-      return {
-        category,
-        cardName: bestCard[0],
-        amount: bestCard[1]
-      };
-    })
-    .sort((a, b) => b.amount - a.amount)
-    .slice(0, 4); // Top 4 categories
-
-  // Get date range label
-  const getDateRangeLabel = () => {
-    switch (dateRange) {
-      case "month": return "This Month";
-      case "ytd": return "Year to Date";
-      case "year": return "This Year";
-      case "all": return "All Time";
-      default: return "This Month";
-    }
-  };
+  const hasAnyData = totalMonthlyBudget > 0 || ownedCardsCount > 0;
 
   return (
-    <main className="max-w-7xl mx-auto px-6 py-6 space-y-6">
-
-      {/* Top Controls */}
-      <section className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">
-          Hi, {user?.firstName || "User"}
-        </h1>
+    <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+      {/* Header */}
+      <section className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">
+            Hi, {user?.firstName || user?.email?.split("@")[0] || "there"}
+          </h1>
+          <p className="text-sm text-navy/70 mt-1">
+            {hasAnyData
+              ? "Here’s a quick overview of your plan and cards."
+              : "Let’s set up your first plan and add your cards."}
+          </p>
+        </div>
 
         <div className="flex gap-3">
-          <select
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value as "all" | "month" | "ytd" | "year")}
-            className="px-3 py-1.5 rounded-lg border border-navy/30 bg-white text-navy hover:bg-aqua/20 cursor-pointer"
-          >
-            <option value="month">This Month</option>
-            <option value="ytd">Year to Date</option>
-            <option value="year">This Year</option>
-            <option value="all">All Time</option>
-          </select>
-
           <Link
             to="/spending"
-            className="px-3 py-1.5 rounded-lg bg-navy text-white hover:bg-aqua hover:text-navy transition"
+            className="px-4 py-2 rounded-lg bg-navy text-white hover:bg-aqua hover:text-navy transition text-sm"
           >
-            View Spending
+            Go to Spending
+          </Link>
+          <Link
+            to="/my-cards"
+            className="px-4 py-2 rounded-lg border border-navy/30 bg-white text-navy hover:bg-aqua/20 transition text-sm"
+          >
+            Go to My Cards
           </Link>
         </div>
       </section>
 
-      {/* KPI Row */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
-          <div className="text-sm text-navy/70">Total Spend</div>
-          <div className="text-2xl font-semibold mt-1">
-            {loading ? "..." : `$${totalSpend.toFixed(2)}`}
-          </div>
-        </div>
-        
-        <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
-          <div className="text-sm text-navy/70">Top Category</div>
-          <div className="text-2xl font-semibold mt-1">
-            {loading ? "..." : topCategory}
-          </div>
-        </div>
-        
-        <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
-          <div className="text-sm text-navy/70">Transactions</div>
-          <div className="text-2xl font-semibold mt-1">
-            {loading ? "..." : filteredTransactions.length}
-          </div>
-        </div>
-        
-        <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
-          <div className="text-sm text-navy/70">Cards Used</div>
-          <div className="text-2xl font-semibold mt-1">
-            {loading ? "..." : new Set(filteredTransactions.map(t => t.cardUsed).filter(Boolean)).size}
-          </div>
-        </div>
-      </section>
-
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
+      {/* If no data yet, show a simple getting-started section */}
+      {!hasAnyData && (
+        <section className="bg-white/80 border border-aqua/40 rounded-2xl p-6 space-y-4">
+          <h2 className="font-semibold text-lg">Get started with CardWise</h2>
+          <p className="text-sm text-navy/70">
+            To unlock personalized insights, you just need to do two quick
+            things:
+          </p>
+          <ol className="list-decimal list-inside space-y-2 text-sm text-navy/80">
+            <li>
+              Set your expected monthly spend for each category on the{" "}
+              <Link to="/spending" className="text-aqua underline">
+                Spending
+              </Link>{" "}
+              page.
+            </li>
+            <li>
+              Add the cards you own on the{" "}
+              <Link to="/my-cards" className="text-aqua underline">
+                My Cards
+              </Link>{" "}
+              page.
+            </li>
+          </ol>
+        </section>
       )}
 
-      {/* Main Content */}
-      <section className="grid lg:grid-cols-3 gap-6">
-
-        {/* LEFT SIDE */}
-        <div className="lg:col-span-2 space-y-6">
-
-          {/* PIE CHART */}
+      {/* KPI Row – only depends on local budget + user cards */}
+      {hasAnyData && (
+        <section className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="font-semibold">Spend by Category</h2>
-              <div className="text-sm text-navy/70">{getDateRangeLabel()}</div>
+            <p className="text-sm text-navy/70">Planned Monthly Spend</p>
+            <p className="text-2xl font-semibold mt-1">
+              {totalMonthlyBudget > 0
+                ? `$${totalMonthlyBudget.toFixed(2)}`
+                : "—"}
+            </p>
+          </div>
+
+          <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
+            <p className="text-sm text-navy/70">Categories Planned</p>
+            <p className="text-2xl font-semibold mt-1">
+              {categoriesPlanned || "—"}
+            </p>
+          </div>
+
+          <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
+            <p className="text-sm text-navy/70">Cards Saved</p>
+            <p className="text-2xl font-semibold mt-1">
+              {ownedCardsCount || "—"}
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* Budget overview – only if there is a plan */}
+      {totalMonthlyBudget > 0 && (
+        <section className="bg-white/70 border border-aqua/40 rounded-2xl p-6 space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h2 className="font-semibold text-lg">Budget overview</h2>
+              <p className="text-sm text-navy/60">
+                Your current monthly plan by category. Edit details in{" "}
+                <Link to="/spending" className="text-aqua underline">
+                  Spending
+                </Link>
+                .
+              </p>
             </div>
-
-            {loading ? (
-              <div className="h-56 flex items-center justify-center text-navy/60">
-                Loading...
-              </div>
-            ) : categorySpend.length === 0 ? (
-              <div className="h-56 flex items-center justify-center text-navy/60">
-                No spending data for this period
-              </div>
-            ) : (
-              <div className="h-56">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={categorySpend as any[]}
-                      dataKey="value"
-                      nameKey="category"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      innerRadius={45}
-                      paddingAngle={2}
-                    >
-                      {categorySpend.map((entry, index) => (
-                        <Cell
-                          key={`cell-${entry.category}`}
-                          fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value: number) => [`$${value.toFixed(2)}`, "Spend"]} 
-                      contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc' }}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            )}
           </div>
 
-          {/* LINE CHART */}
-          <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="font-semibold">Spending Over Time</h2>
-              <div className="text-sm text-navy/70">{getDateRangeLabel()}</div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {CATEGORY_FIELDS.map((field) => {
+              const value = parseFloat(budgets[field.id]) || 0;
+              const share =
+                totalMonthlyBudget > 0
+                  ? (value / totalMonthlyBudget) * 100
+                  : 0;
+              return (
+                <div
+                  key={field.id}
+                  className="bg-white border border-aqua/30 rounded-xl p-4 flex flex-col gap-1"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-navy">
+                      {field.label}
+                    </p>
+                    <p className="text-xs text-navy/60">
+                      {value > 0 ? `${share.toFixed(0)}% of plan` : "—"}
+                    </p>
+                  </div>
+                  <p className="text-xl font-semibold text-aqua">
+                    ${value.toFixed(2)}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Simple cards summary – no API, just count */}
+      {ownedCardsCount > 0 && (
+        <section className="bg-white/70 border border-aqua/40 rounded-2xl p-6 space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h2 className="font-semibold text-lg">Your cards</h2>
+              <p className="text-sm text-navy/60">
+                You currently have{" "}
+                <span className="font-semibold">{ownedCardsCount}</span>{" "}
+                {ownedCardsCount === 1 ? "card" : "cards"} saved. View details
+                or update them on the{" "}
+                <Link to="/my-cards" className="text-aqua underline">
+                  My Cards
+                </Link>{" "}
+                page.
+              </p>
             </div>
-
-            {loading ? (
-              <div className="h-56 flex items-center justify-center text-navy/60">
-                Loading...
-              </div>
-            ) : dailySpend.length === 0 ? (
-              <div className="h-56 flex items-center justify-center text-navy/60">
-                No spending data for this period
-              </div>
-            ) : (
-              <div className="h-56">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={dailySpend as any} margin={{ left: -20 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, "Spend"]} />
-                    <Legend />
-
-                    {/* Dynamically render lines for each card */}
-                    {Object.keys(BANK_COLORS).map(cardName => (
-                      <Line 
-                        key={cardName}
-                        type="monotone" 
-                        dataKey={cardName} 
-                        stroke={BANK_COLORS[cardName]} 
-                        strokeWidth={2} 
-                        dot={false}
-                        connectNulls
-                      />
-                    ))}
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            )}
+            <Link
+              to="/my-cards"
+              className="px-4 py-2 rounded-lg border border-navy/30 bg-white text-navy hover:bg-aqua/20 transition text-sm"
+            >
+              Manage Cards
+            </Link>
           </div>
-
-          {/* RECENT TRANSACTIONS */}
-          <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold">Recent Transactions</h2>
-              <Link to="/spending" className="underline hover:text-aqua text-sm">
-                View all
-              </Link>
-            </div>
-
-            {loading ? (
-              <div className="py-8 text-center text-navy/60">Loading...</div>
-            ) : recentTransactions.length === 0 ? (
-              <div className="py-8 text-center text-navy/60">
-                No transactions yet. <Link to="/spending" className="underline text-aqua">Add one!</Link>
-              </div>
-            ) : (
-              <ul className="divide-y divide-aqua/30">
-                {recentTransactions.map((transaction) => (
-                  <li key={transaction._id} className="py-3 flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">{transaction.merchant || transaction.category}</div>
-                      <div className="text-sm text-navy/70">
-                        {transaction.category} • {transaction.cardUsed}
-                      </div>
-                    </div>
-                    <div className="font-medium">${transaction.amount.toFixed(2)}</div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-
-        {/* RIGHT SIDE */}
-        <div className="space-y-6">
-
-          {/* BEST CARDS */}
-          <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
-            <h2 className="font-semibold mb-3">Most Used Card by Category</h2>
-            
-            {loading ? (
-              <div className="py-8 text-center text-navy/60">Loading...</div>
-            ) : bestCardsByCategory.length === 0 ? (
-              <div className="py-8 text-center text-navy/60 text-sm">
-                No data yet. Start adding transactions!
-              </div>
-            ) : (
-              <ul className="space-y-2">
-                {bestCardsByCategory.map((item) => (
-                  <li
-                    key={item.category}
-                    className="flex items-center justify-between p-2 rounded-lg bg-mint/60"
-                  >
-                    <span className="font-medium">{item.category}</span>
-                    <span className="text-sm text-navy/80 text-right">
-                      {item.cardName}
-                      <span className="block text-xs text-navy/60">
-                        ${item.amount.toFixed(2)}
-                      </span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          {/* OFFERS */}
-          <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
-            <h2 className="font-semibold mb-3">Offers & Perks</h2>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <div className="font-medium">Chase: 5% back on Dining</div>
-                <div className="text-navy/70">Activate this quarter to maximize restaurant spend.</div>
-              </li>
-              <li>
-                <div className="font-medium">Discover: 5% on Online Shopping</div>
-                <div className="text-navy/70">Earn elevated rewards on select online merchants.</div>
-              </li>
-              <li>
-                <div className="font-medium">Bank of America: Travel bonus offer</div>
-                <div className="text-navy/70">Extra points on flights and hotels this month.</div>
-              </li>
-            </ul>
-          </div>
-
-          {/* ALERTS */}
-          <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
-            <h2 className="font-semibold mb-3">Alerts</h2>
-            <ul className="space-y-2 text-sm">
-              <li>You would earn <b>3× more</b> on Dining by using <b>Chase Sapphire Preferred</b>.</li>
-              <li>You’re close to your <b>Groceries</b> budget for this month.</li>
-            </ul>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
     </main>
   );
 }

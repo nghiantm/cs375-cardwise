@@ -7,11 +7,11 @@ import { useAuth } from "../context/AuthContext";
 import appLogo from "../assets/appLogo.png";
 import picture from "../assets/picture.png";
 
-  const isValidEmail = (email: string): boolean => {
-    // Regular expression for email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+const isValidEmail = (email: string): boolean => {
+  // Regular expression for email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -28,18 +28,19 @@ export default function Signup() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: e.target.value,
+  const handleChange =
+    (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: e.target.value,
       }));
     };
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();  // Stop page reload
-    setError("");        // Clear previous errors
+    e.preventDefault(); // Stop page reload
+    setError(""); // Clear previous errors
 
-        // Validation: Check email format
+    // Validation: Check email format
     if (!isValidEmail(formData.email)) {
       setError("Please enter a valid email address");
       return;
@@ -57,28 +58,30 @@ export default function Signup() {
       return;
     }
 
-
     // Validation
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       return;
     }
 
-    setLoading(true);  // Show loading state
+    setLoading(true); // Show loading state
 
     try {
-      const response = await fetch("http://localhost:3000/api/users/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          password: formData.password,
-        }),
-      });
+      const response = await fetch(
+        "http://localhost:3000/api/users/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            password: formData.password,
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -89,11 +92,12 @@ export default function Signup() {
       // Success - auto-login and redirect to onboarding
       await login(formData.email, formData.password);
       navigate("/onboarding");
-
     } catch (err: any) {
       // Check if it's a network error (fetch failed)
       if (err.message === "Failed to fetch" || err instanceof TypeError) {
-        setError("Unable to reach server. Please check your connection and try again.");
+        setError(
+          "Unable to reach server. Please check your connection and try again."
+        );
       } else {
         // Server error or validation error
         setError(err.message || "An error occurred during registration");
@@ -111,8 +115,16 @@ export default function Signup() {
           <span className="font-semibold text-navy">CardWise</span>
         </div>
 
-        <h1 className="text-4xl font-bold text-navy mb-1">Create Your Account</h1>
-        <p className="text-navy/70 mb-6">Please enter your details to sign up</p>
+        <h1 className="text-4xl font-bold text-navy mb-1">
+          Create Your Account
+        </h1>
+        <p className="text-navy/70">
+          Please enter your details to sign up.
+        </p>
+        <p className="text-xs text-navy/60 mb-6">
+          <span className="text-red-600 font-semibold">*</span> All fields are
+          required.
+        </p>
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -121,45 +133,45 @@ export default function Signup() {
         )}
 
         <form className="space-y-4 grow" onSubmit={handleSubmit}>
-          {/* Notice: Your TextField already accepts value and onChange! */}
-          <TextField 
-            label="Email Address" 
-            type="email" 
+          <TextField
+            label="Email Address *"
+            type="email"
             placeholder="you@example.com"
-            value={formData.email}              // ✅ Works with your component
-            onChange={handleChange("email")}    // ✅ Works with your component
+            value={formData.email}
+            onChange={handleChange("email")}
             required
           />
-          <TextField 
-            label="First Name"
+
+          <TextField
+            label="First Name *"
             value={formData.firstName}
             onChange={handleChange("firstName")}
             required
           />
-          
-          <TextField 
-            label="Last Name"
+
+          <TextField
+            label="Last Name *"
             value={formData.lastName}
             onChange={handleChange("lastName")}
             required
           />
-          
-          <PasswordField 
-            label="Password"
+
+          <PasswordField
+            label="Password *"
             value={formData.password}
             onChange={handleChange("password")}
             required
           />
-          
-          <PasswordField 
-            label="Confirm Password"
+
+          <PasswordField
+            label="Confirm Password *"
             value={formData.confirmPassword}
             onChange={handleChange("confirmPassword")}
             required
           />
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="btn-primary w-full"
             disabled={loading}
           >
@@ -173,21 +185,24 @@ export default function Signup() {
           <div className="h-px bg-navy/20 flex-1" />
         </div>
 
-        <button
-          type="button"
-          className="btn-secondary w-full"
-        >
+        <button type="button" className="btn-secondary w-full">
           ⨁ Sign Up with Google
         </button>
 
         <p className="mt-4 text-sm">
           Already have an account?{" "}
-          <Link to="/login" className="underline hover:text-aqua">Log In</Link>
+          <Link to="/login" className="underline hover:text-aqua">
+            Log In
+          </Link>
         </p>
       </section>
 
       <aside className="h-full rounded-2xl overflow-hidden border border-aqua/40">
-        <img src={picture} alt="Financial dashboard illustration" className="w-full h-full object-cover" />
+        <img
+          src={picture}
+          alt="Financial dashboard illustration"
+          className="w-full h-full object-cover"
+        />
       </aside>
     </main>
   );

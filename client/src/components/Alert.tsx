@@ -1,4 +1,4 @@
-// src/components/Alert.tsx
+// client/src/components/Alert.tsx
 import type { ReactNode } from "react";
 
 type AlertVariant = "error" | "success" | "info";
