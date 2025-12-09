@@ -1,4 +1,3 @@
-// client/src/pages/MyCards.tsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "../components/Alert";
@@ -20,12 +19,14 @@ type UserInfo = {
   email: string;
   firstName?: string;
   lastName?: string;
+  ownedCards?: string[];
 };
 
 export default function MyCards() {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
   const authFetch = useAuthFetch();
+
   const [user, setUser] = useState<UserInfo | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -34,22 +35,40 @@ export default function MyCards() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  // 👉 Always fetch the latest user (including ownedCards) from the backend
   useEffect(() => {
-    // Use AuthContext user instead of localStorage
     if (!authUser) {
       navigate("/login");
       return;
     }
-    setUser(authUser);
-    
-    // Preselect owned cards
-    if (authUser.ownedCards && authUser.ownedCards.length > 0) {
-      setSelected(new Set(authUser.ownedCards));
-    }
-  }, [authUser, navigate]);
 
+    const loadUser = async () => {
+      try {
+        const res = await authFetch(`${API_URL}/users/${authUser.id}`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || "Failed to load user info");
+        }
+
+        const apiUser = (data.data || data) as UserInfo;
+        setUser(apiUser);
+
+        if (apiUser.ownedCards && apiUser.ownedCards.length > 0) {
+          setSelected(new Set(apiUser.ownedCards));
+        }
+      } catch (err: any) {
+        console.error("Failed to load user info:", err);
+        setError(err.message || "Failed to load user info");
+      }
+    };
+
+    loadUser();
+  }, [authUser, authFetch, navigate]);
+
+  // Load all cards for selection
   useEffect(() => {
-    async function fetchCards() {
+    const fetchCards = async () => {
       try {
         const res = await authFetch(`${API_URL}/cards`);
         const data = await res.json();
@@ -58,11 +77,12 @@ export default function MyCards() {
         }
         setCards(data.data || []);
       } catch (err: any) {
+        console.error("Failed to load cards:", err);
         setError(err.message || "Failed to load cards");
       } finally {
         setLoadingCards(false);
       }
-    }
+    };
     fetchCards();
   }, [authFetch]);
 
@@ -82,6 +102,8 @@ export default function MyCards() {
     setSaving(true);
 
     try {
+      const body = { cardIds: Array.from(selected) };
+
       const res = await authFetch(
         `${API_URL}/users/${user.id}/owned-cards`,
         {
@@ -89,7 +111,7 @@ export default function MyCards() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ cardIds: Array.from(selected) }),
+          body: JSON.stringify(body),
         }
       );
 
@@ -98,9 +120,15 @@ export default function MyCards() {
         throw new Error(data.message || "Failed to save cards");
       }
 
+      // Optional: update local user state so it stays in sync
+      setUser((prev) =>
+        prev ? { ...prev, ownedCards: Array.from(selected) } : prev
+      );
+
       setSuccess("Cards saved! Calculating your best cards…");
       setTimeout(() => navigate("/my-best-cards"), 800);
     } catch (err: any) {
+      console.error("Failed to save cards:", err);
       setError(err.message || "Failed to save cards");
     } finally {
       setSaving(false);
@@ -120,7 +148,6 @@ export default function MyCards() {
       </header>
 
       {error && <Alert variant="error">{error}</Alert>}
-
       {success && <Alert variant="success">{success}</Alert>}
 
       {loadingCards ? (
