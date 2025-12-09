@@ -2,7 +2,7 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Layout from "./Layout";
 import ProtectedRoute from "../components/ProtectedRoute";
-//import Landing from "../pages/Landing";
+import Landing from "../pages/Landing";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import Onboarding from "../pages/Onboarding";
@@ -18,7 +18,7 @@ const router = createBrowserRouter([
   {
     element: <Layout />,
     children: [
-      { path: "/", element: <Login /> },
+      { path: "/", element: <Landing /> },
       { path: "/login", element: <Login /> },
       { path: "/signup", element: <Signup /> },
       { path: "/global-ranking", element: <GlobalRanking /> },

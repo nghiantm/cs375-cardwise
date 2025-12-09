@@ -22,7 +22,7 @@ export default function Layout() {
 
           {/* Main Navigation - Left aligned */}
           <nav className="flex gap-6 text-base flex-1">
-            {/*
+            
             <NavLink 
               to="/" 
               className={({ isActive }) =>
@@ -33,7 +33,7 @@ export default function Layout() {
             >
               Dashboard
             </NavLink>
-            */}
+            
             <NavLink 
               to="/spending" 
               className={({ isActive }) =>
