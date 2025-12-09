@@ -73,8 +73,21 @@ export default function PersonalRanking() {
       }
     });
     
-    return result;
-  }, [rankings, selectedCategory, sortBy]);
+  return result;
+}, [rankings, selectedCategory, sortBy]);
+
+  const formatBankName = (bankId?: string) => {
+    if (!bankId) return "";
+    return bankId
+      .split("_")
+      .filter(Boolean)
+      .map((word) => {
+        const lower = word.toLowerCase();
+        if (lower === "of") return "of";
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+      })
+      .join(" ");
+  };
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
@@ -173,9 +186,7 @@ export default function PersonalRanking() {
                         <span>{item.card_name || item.card_id}</span>
                       </div>
                     </td>
-                    <td className="py-2 pr-4">
-                      {item.bank_id?.replace(/_/g, " ") || "—"}
-                    </td>
+                    <td className="py-2 pr-4">{formatBankName(item.bank_id) || "—"}</td>
                     <td className="py-2 pr-4">
                       <span className="font-semibold text-aqua">
                         {item.cashback_equiv_pct.toFixed(1)}%

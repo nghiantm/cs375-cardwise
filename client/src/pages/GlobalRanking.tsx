@@ -71,6 +71,19 @@ export default function GlobalRanking() {
     return result;
   }, [cards, sortBy]);
 
+  const formatBankName = (bankId?: string) => {
+    if (!bankId) return "";
+    return bankId
+      .split("_")
+      .filter(Boolean)
+      .map((word) => {
+        const lower = word.toLowerCase();
+        if (lower === "of") return "of";
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+      })
+      .join(" ");
+  };
+
   return (
     <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
       <header>
@@ -160,9 +173,7 @@ export default function GlobalRanking() {
                           <span>{c.card_name || c.card_id}</span>
                         </div>
                       </td>
-                      <td className="py-2 pr-4">
-                        {c.bank_id?.replace(/_/g, " ")}
-                      </td>
+                      <td className="py-2 pr-4">{formatBankName(c.bank_id)}</td>
                       <td className="py-2 pr-4">
                         <span className="uppercase tracking-wide font-medium">
                           {CategoryHelper.formatLabel(c.best_category)}
