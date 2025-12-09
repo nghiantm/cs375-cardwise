@@ -302,6 +302,8 @@ exports.getInvestmentSimulation = async (req, res, next) => {
     const cardMap = await getCardDetails(Array.from(cardIds));
     let totalSavings = 0;
     const cardsResponse = {};
+    let totalAnnualFees = 0;
+    const countedFees = new Set();
 
     for (const [category, info] of Object.entries(bestRewards)) {
       const { reward, spend } = info;
@@ -309,6 +311,14 @@ exports.getInvestmentSimulation = async (req, res, next) => {
       totalSavings += savings;
 
       const card = cardMap[reward.card_id] || {};
+
+      if (!countedFees.has(reward.card_id)) {
+        countedFees.add(reward.card_id);
+        const fee = typeof card.annual_fee === 'number' ? card.annual_fee : 0;
+        if (fee > 0) {
+          totalAnnualFees += fee;
+        }
+      }
 
       cardsResponse[category] = {
         card_id: reward.card_id,
@@ -321,7 +331,7 @@ exports.getInvestmentSimulation = async (req, res, next) => {
       };
     }
 
-    const investmentResults = calculateInvestmentGrowth(totalSavings);
+    const investmentResults = calculateInvestmentGrowth(totalSavings, totalAnnualFees);
     const summaryInfo = buildInvestmentSummary(investmentResults);
 
     return res.status(200).json({
@@ -330,6 +340,7 @@ exports.getInvestmentSimulation = async (req, res, next) => {
         cards: cardsResponse,
         investment_results: investmentResults,
         total_monthly_savings: Number(totalSavings.toFixed(2)),
+        total_annual_fees: Number(totalAnnualFees.toFixed(2)),
         investment_summary: summaryInfo,
       },
     });
@@ -464,33 +475,46 @@ async function getCardDetails(cardIds) {
   }, {});
 }
 
-function calculateInvestmentGrowth(baseAmount) {
+function calculateInvestmentGrowth(baseAmount, totalAnnualFees = 0) {
   const ANNUAL_RATE = 0.1; // assumed 10% yearly return
   const monthlyRate = ANNUAL_RATE / 12;
   const horizons = [1, 6, 12, 18, 24]; // months
+  const maxMonths = Math.max(...horizons);
 
-  const results = horizons.reduce((acc, months) => {
-    const principal = baseAmount * months;
-    let futureValue;
+  const results = {};
+  let principal = 0;
+  let balance = 0;
 
-    if (monthlyRate === 0) {
-      futureValue = principal;
-    } else {
-      futureValue = baseAmount * ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate);
+  for (let month = 1; month <= maxMonths; month++) {
+    principal += baseAmount;
+    balance += baseAmount;
+
+    if (totalAnnualFees > 0 && month % 12 === 0) {
+      principal -= totalAnnualFees;
+      balance -= totalAnnualFees;
     }
 
-    const interest = futureValue - principal;
-    acc[months] = {
-      principal: Number(principal.toFixed(2)),
-      interest: Number(interest.toFixed(2)),
-      total: Number(futureValue.toFixed(2)),
-    };
-    return acc;
-  }, {});
+    if (principal < 0) principal = 0;
+    if (balance < 0) balance = 0;
+
+    if (monthlyRate > 0) {
+      balance *= 1 + monthlyRate;
+    }
+
+    if (horizons.includes(month)) {
+      const interest = balance - principal;
+      results[month] = {
+        principal: Number(principal.toFixed(2)),
+        interest: Number(interest.toFixed(2)),
+        total: Number(balance.toFixed(2)),
+      };
+    }
+  }
 
   results.metadata = {
     annual_rate: ANNUAL_RATE,
     monthly_rate: monthlyRate,
+    annual_fee_total: totalAnnualFees,
   };
 
   return results;

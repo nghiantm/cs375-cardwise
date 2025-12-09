@@ -41,9 +41,11 @@ type SimulationData = {
     metadata?: {
       annual_rate: number;
       monthly_rate: number;
+      annual_fee_total: number;
     };
   };
   total_monthly_savings: number;
+  total_annual_fees: number;
   investment_summary?: {
     months: number;
     principal: number;
@@ -439,11 +441,15 @@ export default function Spending() {
               <p className="text-sm text-navy/60 mb-3">
                 Monthly savings compounded monthly. Totals include principal + interest.
               </p>
-              <div className="text-sm text-navy/70 mb-3">
+              <div className="text-sm text-navy/70 mb-1">
                 Monthly savings contributed:{" "}
                 <span className="font-semibold text-aqua">
                   ${simulation.total_monthly_savings.toFixed(2)}
                 </span>
+              </div>
+              <div className="text-xs text-navy/50 mb-3">
+                Annual fees deducted every 12 months: $
+                {simulation.total_annual_fees.toFixed(2)}
               </div>
 
               <table className="min-w-full text-left text-sm">
@@ -458,14 +464,28 @@ export default function Spending() {
                 <tbody>
                   {sortedInvestmentEntries
                     .filter(([months]) => Number(months) > 1)
-                    .map(([months, value]) => (
-                      <tr key={months} className="border-b border-aqua/20 last:border-b-0">
-                        <td className="py-2 pr-4">{months} months</td>
-                        <td className="py-2 pr-4">${value.principal.toFixed(2)}</td>
-                        <td className="py-2 pr-4">${value.interest.toFixed(2)}</td>
-                        <td className="py-2 pr-4 text-aqua font-semibold">${value.total.toFixed(2)}</td>
-                      </tr>
-                    ))}
+                    .map(([months, value]) => {
+                      const monthNumber = Number(months);
+                      const showDivider =
+                        simulation.total_annual_fees > 0 && monthNumber % 12 === 0;
+                      return (
+                        <>
+                          <tr key={months} className="border-b border-aqua/20 last:border-b-0">
+                            <td className="py-2 pr-4">{months} months</td>
+                            <td className="py-2 pr-4">${value.principal.toFixed(2)}</td>
+                            <td className="py-2 pr-4">${value.interest.toFixed(2)}</td>
+                            <td className="py-2 pr-4 text-aqua font-semibold">${value.total.toFixed(2)}</td>
+                          </tr>
+                          {showDivider && (
+                            <tr className="text-xs text-navy/60">
+                              <td colSpan={4} className="py-1">
+                                ─ Annual fees deducted: ${simulation.total_annual_fees.toFixed(2)}
+                              </td>
+                            </tr>
+                          )}
+                        </>
+                      );
+                    })}
                 </tbody>
               </table>
 
