@@ -3,8 +3,6 @@ import { useEffect, useState } from "react";
 import Alert from "./Alert";
 import { useAuth, useAuthFetch } from "../context/AuthContext";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
-
 type Card = {
   _id: string;
   card_id: string;
@@ -17,10 +15,14 @@ type Card = {
 type CardSelectionModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSave?: () => void;
+  onSave?: (selectedIds: string[]) => void; // 🔹 changed
 };
 
-export default function CardSelectionModal({ isOpen, onClose, onSave }: CardSelectionModalProps) {
+export default function CardSelectionModal({
+  isOpen,
+  onClose,
+  onSave,
+}: CardSelectionModalProps) {
   const { user: authUser } = useAuth();
   const authFetch = useAuthFetch();
   const [cards, setCards] = useState<Card[]>([]);
@@ -32,19 +34,21 @@ export default function CardSelectionModal({ isOpen, onClose, onSave }: CardSele
 
   useEffect(() => {
     if (!isOpen) return;
-    
-    // Preselect owned cards
+
+    // Preselect owned cards from AuthContext
     if (authUser?.ownedCards && authUser.ownedCards.length > 0) {
       setSelected(new Set(authUser.ownedCards));
+    } else {
+      setSelected(new Set());
     }
   }, [authUser, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
-    
+
     async function fetchCards() {
       try {
-        const res = await authFetch(`${API_URL}/cards`);
+        const res = await authFetch("http://localhost:3000/api/cards");
         const data = await res.json();
         if (!res.ok) {
           throw new Error(data.message || "Failed to load cards");
@@ -75,14 +79,16 @@ export default function CardSelectionModal({ isOpen, onClose, onSave }: CardSele
     setSaving(true);
 
     try {
+      const selectedIds = Array.from(selected);
+
       const res = await authFetch(
-        `${API_URL}/users/${authUser.id}/owned-cards`,
+        `http://localhost:3000/api/users/${authUser.id}/owned-cards`,
         {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ cardIds: Array.from(selected) }),
+          body: JSON.stringify({ cardIds: selectedIds }),
         }
       );
 
@@ -93,7 +99,8 @@ export default function CardSelectionModal({ isOpen, onClose, onSave }: CardSele
 
       setSuccess("Cards saved successfully!");
       setTimeout(() => {
-        if (onSave) onSave();
+        // 🔹 tell parent what the new selection is
+        if (onSave) onSave(selectedIds);
         onClose();
       }, 800);
     } catch (err: any) {

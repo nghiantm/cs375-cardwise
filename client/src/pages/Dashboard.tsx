@@ -35,8 +35,6 @@ const defaultBudget: BudgetState = {
 
 export default function Dashboard() {
   const { user } = useAuth();
-
-  // Budget snapshot loaded from what the user set on Spending page
   const [budgets, setBudgets] = useState<BudgetState>({ ...defaultBudget });
 
   // Load saved monthly budget from localStorage
@@ -48,8 +46,8 @@ export default function Dashboard() {
         const parsed = JSON.parse(stored) as Partial<BudgetState>;
         setBudgets((prev) => ({ ...prev, ...parsed }));
       }
-    } catch (error) {
-      console.warn("Failed to load saved budget", error);
+    } catch (err) {
+      console.warn("Failed to load dashboard budget", err);
     }
   }, []);
 
@@ -60,16 +58,19 @@ export default function Dashboard() {
     }, 0);
   }, [budgets]);
 
-  const categoriesWithPlan = useMemo(() => {
-    return CATEGORY_FIELDS.filter(
-      (field) => (parseFloat(budgets[field.id]) || 0) > 0
-    ).length;
+  const categoriesPlanned = useMemo(() => {
+    return CATEGORY_FIELDS.filter((field) => {
+      const value = parseFloat(budgets[field.id]) || 0;
+      return value > 0;
+    }).length;
   }, [budgets]);
 
   const ownedCardsCount =
     (user as any)?.ownedCards && Array.isArray((user as any).ownedCards)
       ? (user as any).ownedCards.length
       : 0;
+
+  const hasAnyData = totalMonthlyBudget > 0 || ownedCardsCount > 0;
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
@@ -80,7 +81,9 @@ export default function Dashboard() {
             Hi, {user?.firstName || user?.email?.split("@")[0] || "there"}
           </h1>
           <p className="text-sm text-navy/70 mt-1">
-            Here&apos;s a snapshot of your plan, cards, and potential savings.
+            {hasAnyData
+              ? "Here’s a quick overview of your plan and cards."
+              : "Let’s set up your first plan and add your cards."}
           </p>
         </div>
 
@@ -89,72 +92,88 @@ export default function Dashboard() {
             to="/spending"
             className="px-4 py-2 rounded-lg bg-navy text-white hover:bg-aqua hover:text-navy transition text-sm"
           >
-            Update Budget
+            Go to Spending
           </Link>
           <Link
             to="/my-cards"
             className="px-4 py-2 rounded-lg border border-navy/30 bg-white text-navy hover:bg-aqua/20 transition text-sm"
           >
-            Manage Cards
+            Go to My Cards
           </Link>
         </div>
       </section>
 
-      {/* KPI Row */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
-          <p className="text-sm text-navy/70">Planned Monthly Spend</p>
-          <p className="text-2xl font-semibold mt-1">
-            ${totalMonthlyBudget.toFixed(2)}
+      {/* If no data yet, show a simple getting-started section */}
+      {!hasAnyData && (
+        <section className="bg-white/80 border border-aqua/40 rounded-2xl p-6 space-y-4">
+          <h2 className="font-semibold text-lg">Get started with CardWise</h2>
+          <p className="text-sm text-navy/70">
+            To unlock personalized insights, you just need to do two quick
+            things:
           </p>
-        </div>
-
-        <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
-          <p className="text-sm text-navy/70">Budget Categories</p>
-          <p className="text-2xl font-semibold mt-1">{categoriesWithPlan}</p>
-        </div>
-
-        <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
-          <p className="text-sm text-navy/70">Cards Selected</p>
-          <p className="text-2xl font-semibold mt-1">{ownedCardsCount}</p>
-        </div>
-
-        <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
-          <p className="text-sm text-navy/70">Simulator</p>
-          <p className="text-sm mt-1 text-navy/70">
-            Run details from the{" "}
-            <Link to="/spending" className="underline text-aqua">
-              Spending
-            </Link>{" "}
-            page.
-          </p>
-        </div>
-      </section>
-
-      {/* Budget Overview */}
-      <section className="bg-white/70 border border-aqua/40 rounded-2xl p-6 space-y-4">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <h2 className="font-semibold text-lg">Budget overview</h2>
-            <p className="text-sm text-navy/60">
-              Your current monthly plan by category. Edit details in{" "}
+          <ol className="list-decimal list-inside space-y-2 text-sm text-navy/80">
+            <li>
+              Set your expected monthly spend for each category on the{" "}
               <Link to="/spending" className="text-aqua underline">
                 Spending
-              </Link>
-              .
+              </Link>{" "}
+              page.
+            </li>
+            <li>
+              Add the cards you own on the{" "}
+              <Link to="/my-cards" className="text-aqua underline">
+                My Cards
+              </Link>{" "}
+              page.
+            </li>
+          </ol>
+        </section>
+      )}
+
+      {/* KPI Row – only depends on local budget + user cards */}
+      {hasAnyData && (
+        <section className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
+            <p className="text-sm text-navy/70">Planned Monthly Spend</p>
+            <p className="text-2xl font-semibold mt-1">
+              {totalMonthlyBudget > 0
+                ? `$${totalMonthlyBudget.toFixed(2)}`
+                : "—"}
             </p>
           </div>
-        </div>
 
-        {totalMonthlyBudget === 0 ? (
-          <div className="text-sm text-navy/60">
-            You haven&apos;t set a monthly plan yet. Head to the{" "}
-            <Link to="/spending" className="text-aqua underline">
-              Spending
-            </Link>{" "}
-            page to create one.
+          <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
+            <p className="text-sm text-navy/70">Categories Planned</p>
+            <p className="text-2xl font-semibold mt-1">
+              {categoriesPlanned || "—"}
+            </p>
           </div>
-        ) : (
+
+          <div className="bg-white/70 border border-aqua/40 rounded-2xl p-4">
+            <p className="text-sm text-navy/70">Cards Saved</p>
+            <p className="text-2xl font-semibold mt-1">
+              {ownedCardsCount || "—"}
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* Budget overview – only if there is a plan */}
+      {totalMonthlyBudget > 0 && (
+        <section className="bg-white/70 border border-aqua/40 rounded-2xl p-6 space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h2 className="font-semibold text-lg">Budget overview</h2>
+              <p className="text-sm text-navy/60">
+                Your current monthly plan by category. Edit details in{" "}
+                <Link to="/spending" className="text-aqua underline">
+                  Spending
+                </Link>
+                .
+              </p>
+            </div>
+          </div>
+
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {CATEGORY_FIELDS.map((field) => {
               const value = parseFloat(budgets[field.id]) || 0;
@@ -172,7 +191,7 @@ export default function Dashboard() {
                       {field.label}
                     </p>
                     <p className="text-xs text-navy/60">
-                      {share > 0 ? `${share.toFixed(0)}% of plan` : "—"}
+                      {value > 0 ? `${share.toFixed(0)}% of plan` : "—"}
                     </p>
                   </div>
                   <p className="text-xl font-semibold text-aqua">
@@ -182,62 +201,35 @@ export default function Dashboard() {
               );
             })}
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
-      {/* Best Cards section – simple link, no API calls */}
-      <section className="bg-white/70 border border-aqua/40 rounded-2xl p-6 space-y-3">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <h2 className="font-semibold text-lg">Best cards this month</h2>
-          <Link
-            to="/my-cards"
-            className="text-sm text-aqua underline hover:text-aqua/80"
-          >
-            View my best cards →
-          </Link>
-        </div>
-        <p className="text-sm text-navy/60">
-          See a breakdown of which card to use for each category on the{" "}
-          <Link to="/my-cards" className="text-aqua underline">
-            My Cards
-          </Link>{" "}
-          page.
-        </p>
-      </section>
-
-      {/* Savings & growth preview – just points to simulator */}
-      <section className="bg-white/70 border border-aqua/40 rounded-2xl p-6 space-y-3">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <h2 className="font-semibold text-lg">Savings &amp; growth</h2>
-            <p className="text-sm text-navy/60">
-              Run a detailed investment simulation based on your budget and best
-              cards.
-            </p>
+      {/* Simple cards summary – no API, just count */}
+      {ownedCardsCount > 0 && (
+        <section className="bg-white/70 border border-aqua/40 rounded-2xl p-6 space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h2 className="font-semibold text-lg">Your cards</h2>
+              <p className="text-sm text-navy/60">
+                You currently have{" "}
+                <span className="font-semibold">{ownedCardsCount}</span>{" "}
+                {ownedCardsCount === 1 ? "card" : "cards"} saved. View details
+                or update them on the{" "}
+                <Link to="/my-cards" className="text-aqua underline">
+                  My Cards
+                </Link>{" "}
+                page.
+              </p>
+            </div>
+            <Link
+              to="/my-cards"
+              className="px-4 py-2 rounded-lg border border-navy/30 bg-white text-navy hover:bg-aqua/20 transition text-sm"
+            >
+              Manage Cards
+            </Link>
           </div>
-          <Link
-            to="/spending"
-            className="px-4 py-2 rounded-lg bg-navy text-white hover:bg-aqua hover:text-navy transition text-sm"
-          >
-            Open Simulator
-          </Link>
-        </div>
-        {totalMonthlyBudget === 0 ? (
-          <p className="text-sm text-navy/60">
-            Once you set a monthly plan, we&apos;ll help you see your potential
-            savings and growth here.
-          </p>
-        ) : (
-          <p className="text-sm text-navy/60">
-            With a monthly plan of{" "}
-            <span className="font-semibold text-aqua">
-              ${totalMonthlyBudget.toFixed(2)}
-            </span>
-            , you can explore how much cashback you could earn and invest using
-            the simulator.
-          </p>
-        )}
-      </section>
+        </section>
+      )}
     </main>
   );
 }
