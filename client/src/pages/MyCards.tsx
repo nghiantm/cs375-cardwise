@@ -24,7 +24,7 @@ type UserInfo = {
 
 export default function MyCards() {
   const navigate = useNavigate();
-  const { user: authUser } = useAuth();
+  const { user: authUser, updateOwnedCards } = useAuth();
   const authFetch = useAuthFetch();
 
   const [user, setUser] = useState<UserInfo | null>(null);
@@ -34,6 +34,8 @@ export default function MyCards() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  console.log("MyCards render:", { authUser, user, selected });
 
   // 👉 Always fetch the latest user (including ownedCards) from the backend
   useEffect(() => {
@@ -120,10 +122,8 @@ export default function MyCards() {
         throw new Error(data.message || "Failed to save cards");
       }
 
-      // Optional: update local user state so it stays in sync
-      setUser((prev) =>
-        prev ? { ...prev, ownedCards: Array.from(selected) } : prev
-      );
+      // keep auth context/localStorage in sync immediately
+      updateOwnedCards(Array.from(selected));
 
       setSuccess("Cards saved! Calculating your best cards…");
       setTimeout(() => navigate("/my-best-cards"), 800);

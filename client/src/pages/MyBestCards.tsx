@@ -38,7 +38,7 @@ type CardWithCategories = {
 };
 
 export default function MyBestCards() {
-  const { user } = useAuth();
+  const { user, updateOwnedCards } = useAuth();
   const authFetch = useAuthFetch();
 
   const [data, setData] = useState<BestCard[]>([]);
@@ -60,6 +60,9 @@ export default function MyBestCards() {
       setOwnedCardIds(ctxOwned);
     }
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // log what card user have at render time
+  console.log("MyBestCards render:", { user, ownedCardIds });
 
   const fetchBest = async () => {
     if (!user) return;
@@ -402,6 +405,7 @@ export default function MyBestCards() {
         onClose={() => setIsModalOpen(false)}
         onSave={(selectedIds) => {
           setOwnedCardIds(selectedIds);
+          updateOwnedCards(selectedIds);
           setIsModalOpen(false);
           fetchBest(); // Refresh recommendations for new card set
         }}

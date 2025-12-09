@@ -18,6 +18,7 @@ interface AuthContextType {
   loginWithGoogle: () => Promise<void>;
   logout: () => void;
   isLoading: boolean;
+  updateOwnedCards: (cardIds: string[]) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -209,8 +210,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('authUser');
   };
 
+  const updateOwnedCards = (cardIds: string[]) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, ownedCards: cardIds };
+      localStorage.setItem('authUser', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, loginWithGoogle, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, loginWithGoogle, logout, isLoading, updateOwnedCards }}>
       {children}
     </AuthContext.Provider>
   );

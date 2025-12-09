@@ -17,7 +17,7 @@ type Card = {
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const { user: authUser } = useAuth();
+  const { user: authUser, updateOwnedCards } = useAuth();
   const authFetch = useAuthFetch();
   const [cards, setCards] = useState<Card[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -78,6 +78,9 @@ export default function Onboarding() {
       if (!res.ok) {
         throw new Error(data.message || "Failed to save cards");
       }
+
+      // keep auth context/localStorage in sync immediately
+      updateOwnedCards(Array.from(selected));
 
       navigate("/dashboard");
     } catch (err: any) {
