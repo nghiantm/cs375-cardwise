@@ -2,7 +2,7 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Layout from "./Layout";
 import ProtectedRoute from "../components/ProtectedRoute";
-import Landing from "../pages/Landing";
+//import Landing from "../pages/Landing";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import Onboarding from "../pages/Onboarding";
